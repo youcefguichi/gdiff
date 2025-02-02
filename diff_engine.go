@@ -1,6 +1,6 @@
 package main
 
-// import "fmt"
+import "fmt"
 
 func createGrid(m, n int) [][]int {
 
@@ -8,11 +8,10 @@ func createGrid(m, n int) [][]int {
 	for i := range grid {
 		grid[i] = make([]int, n)
 	}
-
 	return grid
 }
 
-func lcs(s1, s2 string) (int, string) {
+func lcs(s1, s2 string) string {
 	m := len(s1) + 1
 	n := len(s2) + 1
 	grid := createGrid(m, n)
@@ -21,13 +20,11 @@ func lcs(s1, s2 string) (int, string) {
 	// Calculate lcs
 	for i := range len(s1) {
 		for j := range len(s2) {
-
 			if s1[i] == s2[j] {
 				grid[i+1][j+1] = grid[i][j] + 1
 			}
 			if s1[i] != s2[j] {
 				grid[i+1][j+1] = max(grid[i][j+1], grid[i+1][j])
-
 			}
 		}
 	}
@@ -41,19 +38,51 @@ func lcs(s1, s2 string) (int, string) {
 			i--
 			j--
 		} else if grid[i-1][j] > grid[i][j-1] {
-			i-- // Move up
+			i--
 		} else {
-			j-- // Move left
+			j--
 		}
 	}
-	lcs = reverse(lcs)
-	return grid[m-1][n-1], string(lcs)
+	lcs = reverseSlice(lcs)
+	return string(lcs)
 }
 
-func reverse(data []byte) []byte {
-	for i := 0; i < len(data); i++ {
-		j := len(data) - 1
+func reverseSlice(data []byte) []byte {
+	j := len(data) - 1
+	for i := 0; i < len(data)/2; i++ {
 		data[i], data[j] = data[j], data[i]
+		j--
 	}
 	return data
 }
+
+func computeAllLcs(s1, s2 []string) ([]string, []int) {
+	var computedLcs []string
+	var trackLineChanges []int
+	for i := range s1 {
+		lcs := lcs(s1[i], s2[i])
+		if lcs != s2[i] {
+			trackLineChanges = append(trackLineChanges, 1)
+		} else {
+			trackLineChanges = append(trackLineChanges, 0)
+		}
+		computedLcs = append(computedLcs, lcs)
+	}
+	return computedLcs, trackLineChanges
+}
+
+const (
+	Reset = "\033[0m"
+	Red   = "\033[31m"
+	Green = "\033[32m"
+)
+
+func generateDiff(s1, s2 []string, lineTracker []int) {
+	for i := range s1 {
+		if lineTracker[i] == 1 {
+			fmt.Printf("%s> %q%s\n", Red, s1[i], Reset)
+			fmt.Printf("%s< %q%s\n", Green, s2[i], Reset)
+		}
+	}
+}
+

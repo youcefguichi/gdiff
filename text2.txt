@@ -1,0 +1,4 @@
+// _, trackLineChanges := computeAllLcs(s1, s2)
+// generateDiff(s1,s2,trackLineChanges)
+// _, trackLineChanges = computeAllLcs(s3, s4)
+// generateDiff(s3,s4,trackLineChanges)
