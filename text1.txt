@@ -1,4 +1,54 @@
-_, trackLineChanges := computeAllLcs(s1, s2)
-generateDiff(s1,s2,trackLineChanges)
-_, trackLineChanges = computeAllLcs(s3, s4)
-generateDiff(s3,s4,trackLineChanges)
+func main() {
+	text1, err := readLines("text1.txt")
+	if err != nil {
+		fmt.Println("Error reading text1.txt:", err)
+		return
+	}
+
+	_, err := readLines("text2.txt")
+	if err != nil {
+		fmt.Println("Error reading text2.txt:", err)
+		return
+	}
+
+	whateveHereWeAre(text1, text2)
+    	text1, err := readLines("text1.txt")
+	if err != nil {
+		fmt.Println("Error reading text1.txt:", err)
+		return
+	}
+
+	_, err := readLines("text2.txt")
+	if err != nil {
+		fmt.Println("Error reading text2.txt:", err)
+		return
+	}
+
+	whateveHereWeAre(text1, text2)
+    	text1, err := readLines("text1.txt")
+	if err != nil {
+		fmt.Println("Error reading text1.txt:", err)
+		return
+	}
+
+	_, err := readLines("text2.txt")
+	if err != nil {
+		fmt.Println("Error reading text2.txt:", err)
+		return
+	}
+
+	whateveHereWeAre(text1, text2)
+    	text1, err := readLines("text1.txt")
+	if err != nil {
+		fmt.Println("Error reading text1.txt:", err)
+		return
+	}
+
+	_, err := readLines("text2.txt")
+	if err != nil {
+		fmt.Println("Error reading text2.txt:", err)
+		return
+	}
+
+	whateveHereWeAre(text1, text2)
+}

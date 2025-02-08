@@ -2,10 +2,14 @@ package main
 
 import "fmt"
 
+
+
+
+
 func main() {
 
-	s1 := []string{"_, trackLineChanges := computeAllLcs(s1, s2)", "generateDiff(s1,s2,trackLineChanges)"}
-	s2 := []string{"//_, trackLineChanges := computeAllLcs(s1, s2)", "//generateDiff(s1,s2,trackLineChanges)"}
+	// s1 := []string{"_, trackLineChanges := computeAllLcs(s1, s2)", "generateDiff(s1,s2,trackLineChanges)"}
+	// s2 := []string{"//_, trackLineChanges := computeAllLcs(s1, s2)", "//generateDiff(s1,s2,trackLineChanges)"}
 	// s3 := []string{"Coding Challenges helps you become a better software engineer through that build real applications.",
 	//      "I share a weekly coding challenge aimed at helping software engineers level up their skills through deliberate practice.",
 	//      "I’ve used or am using these coding challenges as exercise to learn a new programming language or technology.",
@@ -18,12 +22,35 @@ func main() {
 	// fmt.Println(lcs(s1, s2))
 	// fmt.Println(s1, s2)
 	// fmt.Printf("result %q", reverseSlice([]byte(s1)))
-	computedLcs, trackLineChanges := computeAllLcs(s1, s2)
-	generateDiff(s1, s2, trackLineChanges)
-	// _, trackLineChanges = computeAllLcs(s3, s4)
-	// generateDiff(s3,s4,trackLineChanges)
-	fmt.Printf("result %q \n", computedLcs)
-	fmt.Printf("result %d \n", trackLineChanges)
+	// {"ABCDEF", "ABCDEF", "ABCDEF"},
+	// 	{"ABC", "XYZ", ""},
+	// 	{"AABCXY", "XYZ", "XY"},
+	// 	{"", "", ""},
+	// 	{"ABCD", "AC", "AC"},
+	// lcs, removed, inserted := lcs("ABCD", "AC")
+	// generateDiff("kkjt", "//youcef")
+	// DiffFiles("text1.txt", "text2.txt")
+	s1 := []string{
+		"Coding Challenges helps you become a better software engineer through that build real applications.",
+		
+	}
+
+	s2 := []string{
+		"Helping you become a better software engineer through coding challenges that build real applications.",
+		
+	}
+	lcs, removed, inserted := lcs(s1, s2)
+	fmt.Printf("lcs : %s \n", lcs)
+	fmt.Printf("removed: %v \n", removed)
+	fmt.Printf("inserted: %v \n", inserted)
+	generateDiff(s1, s2)
+	
+	// computedLcs, trackLineChanges := computeAllLcs(s1, s2)
+	// generateDiff(s1, s2, trackLineChanges)
+	// // _, trackLineChanges = computeAllLcs(s3, s4)
+	// // generateDiff(s3,s4,trackLineChanges)
+	// fmt.Printf("result %q \n", computedLcs)
+	// fmt.Printf("result %d \n", trackLineChanges)
 
 	// Lines 1: "This is a test which contains:", "this is the lcs"
 	// Lines 2: "this is the lcs", "we're testing"

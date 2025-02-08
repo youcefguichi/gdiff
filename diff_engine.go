@@ -1,9 +1,12 @@
 package main
 
-import "fmt"
+import (
+	 "fmt"
+	// "bufio"
+	// "os"
+)
 
 func createGrid(m, n int) [][]int {
-
 	grid := make([][]int, m)
 	for i := range grid {
 		grid[i] = make([]int, n)
@@ -11,11 +14,13 @@ func createGrid(m, n int) [][]int {
 	return grid
 }
 
-func lcs(s1, s2 string) string {
+func lcs(s1, s2 []string) ([]string, []int, []int) {
 	m := len(s1) + 1
 	n := len(s2) + 1
 	grid := createGrid(m, n)
-	var lcs []byte
+	var lcs []string
+	var inserted []int
+	var removed []int
 
 	// Calculate lcs
 	for i := range len(s1) {
@@ -38,51 +43,62 @@ func lcs(s1, s2 string) string {
 			i--
 			j--
 		} else if grid[i-1][j] > grid[i][j-1] {
+			removed = append(removed, i-1)
 			i--
 		} else {
+			inserted = append(inserted, j-1)
 			j--
 		}
 	}
-	lcs = reverseSlice(lcs)
-	return string(lcs)
-}
 
-func reverseSlice(data []byte) []byte {
-	j := len(data) - 1
-	for i := 0; i < len(data)/2; i++ {
-		data[i], data[j] = data[j], data[i]
+	for i > 0 {
+		removed = append(removed, i-1)
+		i--
+	}
+
+	for j > 0 {
+		inserted = append(inserted, j-1)
 		j--
 	}
-	return data
+
+	// lcs = reverseSlice(lcs)
+	return lcs, removed, inserted
 }
 
-func computeAllLcs(s1, s2 []string) ([]string, []int) {
-	var computedLcs []string
-	var trackLineChanges []int
-	for i := range s1 {
-		lcs := lcs(s1[i], s2[i])
-		if lcs != s2[i] {
-			trackLineChanges = append(trackLineChanges, 1)
-		} else {
-			trackLineChanges = append(trackLineChanges, 0)
+
+
+func generateDiff(text1 []string, text2 []string) {
+	_, removed, inserted := lcs(text1, text2)
+        if len(removed) == 0 && len(inserted) == 0 {
+			fmt.Println("No difference")
+			
+		} 
+		// fmt.Printf("> ")
+		for i := range text1 {
+			if IndexExist(removed, i) {
+				fmt.Printf("\033[31m-%s\033[0m \n", string(text1[i]))
+			} else {
+				fmt.Printf("%s \n", string(text1[i]))
+			}
 		}
-		computedLcs = append(computedLcs, lcs)
-	}
-	return computedLcs, trackLineChanges
+		fmt.Printf("\n")
+		// fmt.Printf("< ")
+		for j := range text2 {
+			if IndexExist(inserted, j) {
+				fmt.Printf("\033[32m+%s\033[0m \n", string(text2[j]))
+			} else {
+				fmt.Printf("%s \n", string(text2[j]))
+			}
+		}
+	
 }
 
-const (
-	Reset = "\033[0m"
-	Red   = "\033[31m"
-	Green = "\033[32m"
-)
-
-func generateDiff(s1, s2 []string, lineTracker []int) {
-	for i := range s1 {
-		if lineTracker[i] == 1 {
-			fmt.Printf("%s> %q%s\n", Red, s1[i], Reset)
-			fmt.Printf("%s< %q%s\n", Green, s2[i], Reset)
+func IndexExist(s []int, e int) bool {
+	for _, a := range s {
+		if a == e {
+			return true
 		}
 	}
+	return false
 }
 
