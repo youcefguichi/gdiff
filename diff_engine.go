@@ -73,7 +73,7 @@ func generateDiff(text1 []string, text2 []string) ([]string, []int, []int, []int
 	_, removed, inserted := lcs(text1, text2)
 
 	if len(removed) == 0 && len(inserted) == 0 {
-		return []string{"No changes"}, []int{} , []int{}, []int{}
+		return []string{"No changes"}, []int{}, []int{}, []int{}
 	}
 
 	for {
@@ -98,74 +98,86 @@ func generateDiff(text1 []string, text2 []string) ([]string, []int, []int, []int
 	return diff, lineChangesTracker, removed, inserted
 }
 
-func PrintDiff(diff, text1, text2 []string, removed []int, inserted []int, lineChangesTracker []int, contextLineNum int) {
-	// var currentFile []string
-	if diff[0] == "No changes" {
-		fmt.Println("No changes")
-		return
-	}
-	for i, currentDiffRow := range diff {
-		// currentFile = text1
-		// if currentDiffRow[0] == '+' {
-		// 	currentFile = text2
-		// }
-		PrintContextLines(diff, currentDiffRow, lineChangesTracker[i],lineChangesTracker, text1, text2, removed, inserted, contextLineNum)
+func PrintDiff(diff, text1, text2 []string, removed []int, inserted []int, lineChangesTracker []int, depth int) {
+	dIdx := 0
+	var CurrentDiffStartIdx int
+	var CurrentDiffEndIdx int
+
+	for {
+		CurrentDiffStartIdx = lineChangesTracker[dIdx]
+		CurrentDiffEndIdx = lineChangesTracker[dIdx]
+		for i := CurrentDiffStartIdx + 1; i < len(diff); i++ {
+			if IndexExist(removed, i) {
+				CurrentDiffEndIdx += 1
+			}
+			if IndexExist(inserted, i) {
+				CurrentDiffEndIdx += 1
+			}
+		}
+		dIdx = CurrentDiffEndIdx + 1
+
+		for i := CurrentDiffStartIdx - depth; i <= CurrentDiffEndIdx+depth; i++ {
+			if IndexExist(removed, i) || IndexExist(inserted, i) {
+				fmt.Println(diff[i])
+			}
+
+		}
+
 	}
 }
-func PrintContextLines(diff []string, currentLine string, currentLineIndex int,lineChangesTracker []int, text1 []string, text2 []string , removed []int, inserted []int, depth int) {
-	
-	startingIndex := currentLineIndex - depth
-	endingIndex := currentLineIndex + depth
-	
-	if startingIndex < 0 {
-		startingIndex = 0
-	}
 
-	if endingIndex > len(text1) {
-		endingIndex = len(text1)
-	}
-   
-	for dIdx,diffLine := range diff{
+// func PrintContextLines(diff []string, currentLine string, currentLineIndex int,lineChangesTracker []int, text1 []string, text2 []string , removed []int, inserted []int, depth int) {
 
-    // calculate context for change
-    CalculateContextIds(dIdx, lineChangesTracker)
-	
-	for i := startingIndex; i < endingIndex ; i++{
-	
-        if IndexExist(removed, i) {
-            fmt.Println(text1[i])
-		}
-		if IndexExist(inserted, i) {
-			fmt.Println(text2[i])
-		}
-		if i == lineChangesTracker[dIdx]{
-			fmt.Println(diffLine)
-		}
-		
-		// if i == currentLineIndex && currentLine[0] == '-'{
-			// fmt.Println(currentLine)
-		// }
-	}
-	
-	}
+// 	startingIndex := currentLineIndex - depth
+// 	endingIndex := currentLineIndex + depth
 
-}
+// 	if startingIndex < 0 {
+// 		startingIndex = 0
+// 	}
 
-func CalculateContextIds(dIdx int, currentLineIdx int, startingIndex int, endingIndex int, lineChangesTracker []int, depth int) bool{
+// 	if endingIndex > len(text1) {
+// 		endingIndex = len(text1)
+// 	}
 
+// 	for dIdx,diffLine := range diff{
 
-}
-	// if currentLine[0] == '+' {
-  
-	// 	}
-		
+//     // calculate context for change
+//     CalculateContextIds(dIdx, lineChangesTracker)
+
+// 	for i := startingIndex; i < endingIndex ; i++{
+
+//         if IndexExist(removed, i) {
+//             fmt.Println(text1[i])
+// 		}
+// 		if IndexExist(inserted, i) {
+// 			fmt.Println(text2[i])
+// 		}
+// 		if i == lineChangesTracker[dIdx]{
+// 			fmt.Println(diffLine)
+// 		}
+
+// 		// if i == currentLineIndex && currentLine[0] == '-'{
+// 			// fmt.Println(currentLine)
+// 		// }
+// 	}
+
+// 	}
+
+// }
+
+// func CalculateContextIds(dIdx int, currentLineIdx int, startingIndex int, endingIndex int, lineChangesTracker []int, depth int) bool{
+
+// }
+// if currentLine[0] == '+' {
+
+// 	}
 
 // func upcomingChnages(lineChangesTracker []int) bool{
 // 	for i := range(lineChangesTracker){
 // 		if i == lineChangesTracker[i]{
 // 			return false
 // 		}
-// 		return true 
+// 		return true
 // 	}
 // }
 

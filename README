@@ -3,11 +3,74 @@
 -https://medium.com/@snassr/processing-large-files-in-go-golang-6ea87effbfe2
 
 Todo:
-- update generateDiff function to display deleted line addedline under each other
-- update lcs to only user prev table calculation
+- update generateDiff function to display deletedline addedline under each other
+- update lcs to only use prev table calculation
 - think about how to structure the diffing, should you return the diffing list or how you should do it
 - don't forget to do the unit tests
-- check how you function naming should be in go 
-- how to create debug.json in vs code
-- does calculating a hash can make the calculation faster ?
-- display the number of lines that have the change
+- check how your function naming should be in Go
+- how to create debug.json in VS Code
+[[diffLine, Idx]]
+[]
+- lcs, unchanged, removed, inserted = lcs(text1[], text2[])
+- diff, lineChangesTracker = generateDiff(text1[], text2[], removed, inserted)
+- displayDiffWithContextLines(contextLinesDepth, diff, LineChangesTraacker, removed, inserted, text1, text2)
+- I = 0
+loop diffs:
+    startIndex = diff[i][1]
+    EndIndex   = diff[i][1]
+         // calculate diff Width
+        - for i = i+1 ; len(diff)-1:
+            if IndexExist(diff[i+1][1], removed):
+                endIndex   =  endIndex + 1
+            
+            if IndexExist(diff[i+1][1], inserted):
+                endIndex   =  endIndex + 1
+
+    
+    I = EndIndex + 1
+
+    for i:= startIndex - depth; i < endIndex + depth; i++ {
+        if IndexExist(i, removed) || IndexExist(i, inserted):
+           fmt.println(diff[i][0])
+    }
+    
+    if 
+                lineContext =  Diff[]   
+    <!-- startIndexOftheCurrentChange
+    endIndexofOftheCurrentChange
+   - get indexof current diffLine
+   - calculateCurrentDiffContextLines(curentDiffLineIndex, lineChangesTracker, depth)
+        startIndex =   currentDiffLineIndex - depth
+        endIndex   =  currentDiffLineIndex + depth
+        
+        if startIndex == -1:
+           startIndex = 0
+
+        if endIndex > len(text1) - 1:
+           endIndex = len(text1) -1   
+        i = 0
+        for {
+           if currentDiffLineIndex + 1 = 
+        } -->
+
+- loop through Text1
+    
+
+
+```diff text
+1 unchanged line 1
+2 unchanged line 2
+3 unchanged line 3
+4 - This is an example of a removed line.
+5 + This is an example of an added line.
+6 - Another line that was removed.
+7 + Another line that was added.
+8 unchanged line 4
+9 unchanged line 5
+10 unchanged line 6
+11 - Another line that was removed.
+12 + Another line that was added.
+13 unchanged line 7
+14 unchanged line 8
+15 unchanged line 9
+```
