@@ -1,10 +1,13 @@
 - https://takeuforward.org/data-structure/longest-common-subsequence-dp-25/
 - https://florian.github.io/diffing/
+-https://medium.com/@snassr/processing-large-files-in-go-golang-6ea87effbfe2
 
 Todo:
-- update generateDiff function to display deletedline addedline under each other
+- update generateDiff function to display deleted line addedline under each other
 - update lcs to only user prev table calculation
 - think about how to structure the diffing, should you return the diffing list or how you should do it
 - don't forget to do the unit tests
 - check how you function naming should be in go 
 - how to create debug.json in vs code
+- does calculating a hash can make the calculation faster ?
+- display the number of lines that have the change

@@ -1,9 +1,9 @@
 package main
 
 import (
-	 "fmt"
-	// "bufio"
-	// "os"
+	"bufio"
+	"fmt"
+	"os"
 )
 
 func createGrid(m, n int) [][]int {
@@ -65,32 +65,126 @@ func lcs(s1, s2 []string) ([]string, []int, []int) {
 	return lcs, removed, inserted
 }
 
-
-
-func generateDiff(text1 []string, text2 []string) {
+func generateDiff(text1 []string, text2 []string) ([]string, []int, []int, []int) {
+	text1Index := 0
+	text2Index := 0
+	var diff []string
+	var lineChangesTracker []int
 	_, removed, inserted := lcs(text1, text2)
-        if len(removed) == 0 && len(inserted) == 0 {
-			fmt.Println("No difference")
-			
-		} 
-		// fmt.Printf("> ")
-		for i := range text1 {
-			if IndexExist(removed, i) {
-				fmt.Printf("\033[31m-%s\033[0m \n", string(text1[i]))
-			} else {
-				fmt.Printf("%s \n", string(text1[i]))
-			}
+
+	if len(removed) == 0 && len(inserted) == 0 {
+		return []string{"No changes"}, []int{} , []int{}, []int{}
+	}
+
+	for {
+
+		if text1Index > len(text1)-1 && text2Index > len(text2)-1 {
+			break
 		}
-		fmt.Printf("\n")
-		// fmt.Printf("< ")
-		for j := range text2 {
-			if IndexExist(inserted, j) {
-				fmt.Printf("\033[32m+%s\033[0m \n", string(text2[j]))
-			} else {
-				fmt.Printf("%s \n", string(text2[j]))
-			}
+
+		if IndexExist(removed, text1Index) {
+			diff = append(diff, fmt.Sprintf("\033[31m- %s\033[0m", string(text1[text1Index])))
+			lineChangesTracker = append(lineChangesTracker, text1Index)
 		}
+
+		if IndexExist(inserted, text2Index) {
+			diff = append(diff, fmt.Sprintf("\033[32m+ %s\033[0m", string(text2[text2Index])))
+			lineChangesTracker = append(lineChangesTracker, text2Index)
+		}
+
+		text1Index++
+		text2Index++
+	}
+	return diff, lineChangesTracker, removed, inserted
+}
+
+func PrintDiff(diff, text1, text2 []string, removed []int, inserted []int, lineChangesTracker []int, contextLineNum int) {
+	// var currentFile []string
+	if diff[0] == "No changes" {
+		fmt.Println("No changes")
+		return
+	}
+	for i, currentDiffRow := range diff {
+		// currentFile = text1
+		// if currentDiffRow[0] == '+' {
+		// 	currentFile = text2
+		// }
+		PrintContextLines(diff, currentDiffRow, lineChangesTracker[i],lineChangesTracker, text1, text2, removed, inserted, contextLineNum)
+	}
+}
+func PrintContextLines(diff []string, currentLine string, currentLineIndex int,lineChangesTracker []int, text1 []string, text2 []string , removed []int, inserted []int, depth int) {
 	
+	startingIndex := currentLineIndex - depth
+	endingIndex := currentLineIndex + depth
+	
+	if startingIndex < 0 {
+		startingIndex = 0
+	}
+
+	if endingIndex > len(text1) {
+		endingIndex = len(text1)
+	}
+   
+	for dIdx,diffLine := range diff{
+
+    // calculate context for change
+    CalculateContextIds(dIdx, lineChangesTracker)
+	
+	for i := startingIndex; i < endingIndex ; i++{
+	
+        if IndexExist(removed, i) {
+            fmt.Println(text1[i])
+		}
+		if IndexExist(inserted, i) {
+			fmt.Println(text2[i])
+		}
+		if i == lineChangesTracker[dIdx]{
+			fmt.Println(diffLine)
+		}
+		
+		// if i == currentLineIndex && currentLine[0] == '-'{
+			// fmt.Println(currentLine)
+		// }
+	}
+	
+	}
+
+}
+
+func CalculateContextIds(dIdx int, currentLineIdx int, startingIndex int, endingIndex int, lineChangesTracker []int, depth int) bool{
+
+
+}
+	// if currentLine[0] == '+' {
+  
+	// 	}
+		
+
+// func upcomingChnages(lineChangesTracker []int) bool{
+// 	for i := range(lineChangesTracker){
+// 		if i == lineChangesTracker[i]{
+// 			return false
+// 		}
+// 		return true 
+// 	}
+// }
+
+func PrintNextLines(text []string, currentIndex int, linesNum int) {
+	for i := currentIndex; i < currentIndex+linesNum; i++ {
+		if i > len(text)-1 {
+			break
+		}
+		fmt.Println(text[i])
+	}
+}
+
+func PrintPrevLines(text []string, currentIndex int, linesNum int) {
+	for i := currentIndex; i > currentIndex-linesNum; i-- {
+		if i < 0 {
+			break
+		}
+		fmt.Println(text[i])
+	}
 }
 
 func IndexExist(s []int, e int) bool {
@@ -102,3 +196,17 @@ func IndexExist(s []int, e int) bool {
 	return false
 }
 
+func readFile(filename string) []string {
+	file, err := os.Open(filename)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+
+	var lines []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
+	return lines
+}
