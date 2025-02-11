@@ -1,0 +1,13 @@
+a: 0 
+currentStart : 0 
+current end: 0 
+b: 1 
+c: 0 
+[31m- line 1[0m
+c: 1 
+line 2 
+c: 2 
+line 3
+final result for current start: 0 
+final result for current end: 1 
+dIdx before: 2 
