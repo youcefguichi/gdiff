@@ -102,8 +102,6 @@ func PrintDiff(diff, text1, text2 []string, removed []int, inserted []int, lineC
 	dIdx := 0
 	var CurrentDiffStartIdx int
 	var CurrentDiffEndIdx int
-	// fmt.Println("lineChangesTracker", lineChangesTracker)
-	// fmt.Println("diff", diff)
 	for {
 		if len(lineChangesTracker) == 0 {
 			break
@@ -111,11 +109,7 @@ func PrintDiff(diff, text1, text2 []string, removed []int, inserted []int, lineC
 		CurrentDiffStartIdx = lineChangesTracker[dIdx]
 		CurrentDiffEndIdx = lineChangesTracker[dIdx]
 
-		// fmt.Printf("a: %d \n", dIdx)
-		// fmt.Printf("currentStart : %d \n", CurrentDiffStartIdx)
-		// fmt.Printf("current end: %d \n", CurrentDiffEndIdx)
 		for i := CurrentDiffStartIdx + 1; i < len(diff); i++ {
-			fmt.Printf("b: %d \n", i)
 			if IndexExist(removed, i) {
 				CurrentDiffEndIdx += 1
 			}
@@ -135,108 +129,40 @@ func PrintDiff(diff, text1, text2 []string, removed []int, inserted []int, lineC
 		}
 		diffIndex := dIdx
 		for i := ctxStart; i < ctxEnd; i++ {
-			// fmt.Printf("c: %d \n", i)
+
 			if IndexExist(removed, i) {
-				fmt.Println(diff[diffIndex])
-				diffIndex++
-			}
-			if IndexExist(inserted, i) {
-				fmt.Println(diff[diffIndex])
-				diffIndex++
+				if diffIndex < len(diff) {
+					fmt.Println(diff[diffIndex])
+					diffIndex++
+				}
+			} else if IndexExist(inserted, i+1) {
+				if diffIndex < len(diff) {
+					fmt.Println(diff[diffIndex])
+					diffIndex++
+				}
+
 			} else {
-				fmt.Println(text2[i])
+				if i < len(text1) {
+					fmt.Println(text1[i])
+				} else if i < len(text2) {
+					fmt.Println(text2[i])
+				} else {
+					continue
+				}
+
 			}
 
 		}
 
-		// fmt.Printf("final result for current start: %d \n", CurrentDiffStartIdx)
-		// fmt.Printf("final result for current end: %d \n", CurrentDiffEndIdx)
-		// dIdx = CurrentDiffEndIdx + 1
 		for i, val := range lineChangesTracker {
 			if val == CurrentDiffEndIdx {
-				// fmt.Println(val)
-				// fmt.Println(i)
 				dIdx = i + 1
 			}
 		}
-		// fmt.Printf("dIdx before: %d \n", dIdx)
 		if dIdx == len(lineChangesTracker) {
 			break
 		}
 
-	}
-}
-
-// func PrintContextLines(diff []string, currentLine string, currentLineIndex int,lineChangesTracker []int, text1 []string, text2 []string , removed []int, inserted []int, depth int) {
-
-// 	startingIndex := currentLineIndex - depth
-// 	endingIndex := currentLineIndex + depth
-
-// 	if startingIndex < 0 {
-// 		startingIndex = 0
-// 	}
-
-// 	if endingIndex > len(text1) {
-// 		endingIndex = len(text1)
-// 	}
-
-// 	for dIdx,diffLine := range diff{
-
-//     // calculate context for change
-//     CalculateContextIds(dIdx, lineChangesTracker)
-
-// 	for i := startingIndex; i < endingIndex ; i++{
-
-//         if IndexExist(removed, i) {
-//             fmt.Println(text1[i])
-// 		}
-// 		if IndexExist(inserted, i) {
-// 			fmt.Println(text2[i])
-// 		}
-// 		if i == lineChangesTracker[dIdx]{
-// 			fmt.Println(diffLine)
-// 		}
-
-// 		// if i == currentLineIndex && currentLine[0] == '-'{
-// 			// fmt.Println(currentLine)
-// 		// }
-// 	}
-
-// 	}
-
-// }
-
-// func CalculateContextIds(dIdx int, currentLineIdx int, startingIndex int, endingIndex int, lineChangesTracker []int, depth int) bool{
-
-// }
-// if currentLine[0] == '+' {
-
-// 	}
-
-// func upcomingChnages(lineChangesTracker []int) bool{
-// 	for i := range(lineChangesTracker){
-// 		if i == lineChangesTracker[i]{
-// 			return false
-// 		}
-// 		return true
-// 	}
-// }
-
-func PrintNextLines(text []string, currentIndex int, linesNum int) {
-	for i := currentIndex; i < currentIndex+linesNum; i++ {
-		if i > len(text)-1 {
-			break
-		}
-		fmt.Println(text[i])
-	}
-}
-
-func PrintPrevLines(text []string, currentIndex int, linesNum int) {
-	for i := currentIndex; i > currentIndex-linesNum; i-- {
-		if i < 0 {
-			break
-		}
-		fmt.Println(text[i])
 	}
 }
 

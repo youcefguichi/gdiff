@@ -74,3 +74,9 @@ loop diffs:
 14 unchanged line 8
 15 unchanged line 9
 ```
+
+```diff
+0 - line 1
+1 line 2 
+2 line 3
+```
