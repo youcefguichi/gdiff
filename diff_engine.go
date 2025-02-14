@@ -4,50 +4,49 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	
 )
 
-func createGrid(m, n int) [][]int {
-	grid := make([][]int, m)
-	for i := range grid {
-		grid[i] = make([]int, n)
-	}
-	return grid
-}
-
 func lcs(s1, s2 []string) ([]string, []int, []int) {
-	m := len(s1) + 1
-	n := len(s2) + 1
-	grid := createGrid(m, n)
+	m := len(s1)
+	n := len(s2)
+	cur := make([]int, m+1)
+	prev := make([]int, m+1)
 	var lcs []string
 	var inserted []int
 	var removed []int
 
 	// Calculate lcs
-	for i := range len(s1) {
-		for j := range len(s2) {
-			if s1[i] == s2[j] {
-				grid[i+1][j+1] = grid[i][j] + 1
+	for i := 1; i < m+1; i++ {
+
+		cur, prev = prev, cur
+		fmt.Printf("prev: %v cur: %v \n", prev, cur)
+		for j := 1; j < n+1; j++ {
+
+			if s1[i-1] == s2[j-1] {
+				cur[j] = prev[j-1] + 1
 			}
-			if s1[i] != s2[j] {
-				grid[i+1][j+1] = max(grid[i][j+1], grid[i+1][j])
+
+			if s1[i-1] != s2[j-1] {
+				cur[j] = max(cur[j-1], prev[j])
 			}
 		}
 	}
 
 	// Construct lcs
-	i := m - 1
-	j := n - 1
+	i := m
+	j := n
 	for i > 0 && j > 0 {
 		if s1[i-1] == s2[j-1] {
 			lcs = append(lcs, s1[i-1])
 			i--
 			j--
-		} else if grid[i-1][j] > grid[i][j-1] {
-			removed = append(removed, i-1)
-			i--
-		} else {
+		} else if prev[j] == prev[j-1] {
 			inserted = append(inserted, j-1)
 			j--
+		} else {
+			removed = append(removed, i-1)
+			i--
 		}
 	}
 
@@ -61,7 +60,6 @@ func lcs(s1, s2 []string) ([]string, []int, []int) {
 		j--
 	}
 
-	// lcs = reverseSlice(lcs)
 	return lcs, removed, inserted
 }
 
@@ -189,3 +187,4 @@ func readFile(filename string) []string {
 	}
 	return lines
 }
+
