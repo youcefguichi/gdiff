@@ -2,19 +2,15 @@ package main
 
 import (
 	"fmt"
-	"time"
+	//"time"
 )
 
 func main() {
 	file1 := readFile("text1.txt")
 	file2 := readFile("text2.txt")
-	startTime := time.Now().UnixMilli()
-	lcs, _, _ := lcs(file1, file2)
-	fmt.Println(lcs)
-	endTime := time.Now().UnixMilli()
-	// startTime := time.Now().UnixMilli()
-	// diff, lineChangesTracker, removed, inserted := generateDiff(file1, file2)
-	// PrintDiff(diff, file1, file2, removed, inserted, lineChangesTracker, 4)
-	// endTime := time.Now().UnixMilli()
-	fmt.Printf("Execution time: %d ms\n", endTime-startTime)
+	_, removed, inserted := lcs(file1, file2)
+	diff := generateDiff(file1, file2, &removed, &inserted)
+	for _, line := range diff {
+		fmt.Println(line)
+	}
 }

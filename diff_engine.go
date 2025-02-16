@@ -4,29 +4,31 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	
 )
 
-func lcs(s1, s2 []string) ([]string, []int, []int) {
+const (
+	green = "\033[32m"
+	red   = "\033[31m"
+	reset = "\033[0m"
+)
+
+func lcs(s1, s2 []string) ([]string, map[int]int, map[int]int) {
 	m := len(s1)
 	n := len(s2)
 	cur := make([]int, m+1)
 	prev := make([]int, m+1)
 	var lcs []string
-	var inserted []int
-	var removed []int
+	inserted := make(map[int]int)
+	removed := make(map[int]int)
 
 	// Calculate lcs
 	for i := 1; i < m+1; i++ {
-
 		cur, prev = prev, cur
-		fmt.Printf("prev: %v cur: %v \n", prev, cur)
 		for j := 1; j < n+1; j++ {
 
 			if s1[i-1] == s2[j-1] {
 				cur[j] = prev[j-1] + 1
 			}
-
 			if s1[i-1] != s2[j-1] {
 				cur[j] = max(cur[j-1], prev[j])
 			}
@@ -42,79 +44,90 @@ func lcs(s1, s2 []string) ([]string, []int, []int) {
 			i--
 			j--
 		} else if prev[j] == prev[j-1] {
-			inserted = append(inserted, j-1)
+			inserted[j-1] = 1
 			j--
 		} else {
-			removed = append(removed, i-1)
+			removed[i-1] = 1
 			i--
 		}
 	}
 
 	for i > 0 {
-		removed = append(removed, i-1)
+		removed[i-1] = 1
 		i--
 	}
 
 	for j > 0 {
-		inserted = append(inserted, j-1)
+		inserted[j-1] = 1
 		j--
 	}
 
 	return lcs, removed, inserted
 }
 
-func generateDiff(text1 []string, text2 []string) ([]string, []int, []int, []int) {
-	text1Index := 0
-	text2Index := 0
+func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted *map[int]int) []string {
+	textaIdx := 0
+	textbIdx := 0
 	var diff []string
-	var lineChangesTracker []int
-	_, removed, inserted := lcs(text1, text2)
 
-	if len(removed) == 0 && len(inserted) == 0 {
-		return []string{"No changes"}, []int{}, []int{}, []int{}
+	if len(*removed) == 0 && len(*inserted) == 0 {
+		return []string{"No changes"}
 	}
 
 	for {
 
-		if text1Index > len(text1)-1 && text2Index > len(text2)-1 {
+		if textaIdx > len(texta)-1 && textbIdx > len(textb)-1 {
 			break
 		}
 
-		if IndexExist(removed, text1Index) {
-			diff = append(diff, fmt.Sprintf("\033[31m- %s\033[0m", string(text1[text1Index])))
-			lineChangesTracker = append(lineChangesTracker, text1Index)
+		if _, exists := (*removed)[textaIdx]; exists {
+			diff = append(diff, fmt.Sprintf("%s- %s %s", red, string(texta[textaIdx]), reset))
 		}
 
-		if IndexExist(inserted, text2Index) {
-			diff = append(diff, fmt.Sprintf("\033[32m+ %s\033[0m", string(text2[text2Index])))
-			lineChangesTracker = append(lineChangesTracker, text2Index)
+		if _, exists := (*inserted)[textbIdx]; exists {
+			diff = append(diff, fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset))
 		}
 
-		text1Index++
-		text2Index++
+		textaIdx++
+		textbIdx++
 	}
-	return diff, lineChangesTracker, removed, inserted
+
+	return diff
 }
 
-func PrintDiff(diff, text1, text2 []string, removed []int, inserted []int, lineChangesTracker []int, depth int) {
-	dIdx := 0
-	var CurrentDiffStartIdx int
-	var CurrentDiffEndIdx int
+// func hashList(list []int) map[string]bool {
+
+// }
+
+func PrintDifff(diff, text1, text2 []string, removed map[int]int, inserted map[int]int, lineChangesTracker []int, depth int) {
+	diffCurrentStartIndex := 0
+	diffCurrentEndIndex := 0
+	changeStarteIndex := -1
+	changeEndIndex := 0
+
 	for {
-		if len(lineChangesTracker) == 0 {
+
+		if len(removed) == 0 && len(inserted) == 0 {
 			break
 		}
-		CurrentDiffStartIdx = lineChangesTracker[dIdx]
-		CurrentDiffEndIdx = lineChangesTracker[dIdx]
 
-		for i := CurrentDiffStartIdx + 1; i < len(diff); i++ {
-			if IndexExist(removed, i) {
-				CurrentDiffEndIdx += 1
+		// CurrentDiffStartIdx = lineChangesTracker[dIdx]
+		// CurrentDiffEndIdx = lineChangesTracker[dIdx]
+
+
+        // Calculate change width
+		for i := changeStarteIndex + 1; i < len(diff); i++ {
+
+			if _, exists := removed[i]; exists {
+				changeEndIndex += 1
 			}
-			if IndexExist(inserted, i-1) {
-				CurrentDiffEndIdx += 1
+
+			if _, exists := inserted[i-1]; exists{
+				changeEndIndex += 1
 			}
 		}
+
+
 		ctxStart := CurrentDiffStartIdx - depth
 		ctxEnd := CurrentDiffEndIdx + depth
 
@@ -187,4 +200,3 @@ func readFile(filename string) []string {
 	}
 	return lines
 }
-
