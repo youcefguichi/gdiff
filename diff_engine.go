@@ -65,13 +65,15 @@ func lcs(s1, s2 []string) ([]string, map[int]int, map[int]int) {
 	return lcs, removed, inserted
 }
 
-func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted *map[int]int) []string {
+func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted *map[int]int) ([]string, []int) {
 	textaIdx := 0
 	textbIdx := 0
 	var diff []string
+	var changesTracker []int
+	i := -1
 
 	if len(*removed) == 0 && len(*inserted) == 0 {
-		return []string{"No changes"}
+		return []string{"No changes"}, []int{}
 	}
 
 	for {
@@ -82,98 +84,91 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 
 		if _, exists := (*removed)[textaIdx]; exists {
 			diff = append(diff, fmt.Sprintf("%s- %s %s", red, string(texta[textaIdx]), reset))
+			changesTracker = append(changesTracker, textaIdx)
+			i++
 		}
 
 		if _, exists := (*inserted)[textbIdx]; exists {
 			diff = append(diff, fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset))
+			if i > 0 && changesTracker[i-1] != textbIdx {
+				changesTracker = append(changesTracker, textbIdx)
+				i++
+			}
 		}
 
 		textaIdx++
 		textbIdx++
 	}
 
-	return diff
+	return diff, changesTracker
 }
 
 // func hashList(list []int) map[string]bool {
 
 // }
 
-func PrintDifff(diff, text1, text2 []string, removed map[int]int, inserted map[int]int, lineChangesTracker []int, depth int) {
-	diffCurrentStartIndex := 0
-	diffCurrentEndIndex := 0
-	changeStarteIndex := -1
-	changeEndIndex := 0
+func PrintDifff(diff, text1, text2 []string, removed map[int]int, inserted map[int]int, changesTracker []int, depth int) {
+	var changeStartIdx int
+	var changeEndIdx int
+	lastChangeIteratedIndex := -1
+    
+	if len(inserted) == 0 && len(removed) == 0 {
+		return
+	}
 
-	for {
+	for changeEndIdx < len(diff) {
+		changeStartIdx = lastChangeIteratedIndex + 1
+		changeEndIdx = lastChangeIteratedIndex + 1
 
-		if len(removed) == 0 && len(inserted) == 0 {
-			break
-		}
+		// claculate consecutive changes width
+		for idx, val := range changesTracker {
 
-		// CurrentDiffStartIdx = lineChangesTracker[dIdx]
-		// CurrentDiffEndIdx = lineChangesTracker[dIdx]
-
-
-        // Calculate change width
-		for i := changeStarteIndex + 1; i < len(diff); i++ {
-
-			if _, exists := removed[i]; exists {
-				changeEndIndex += 1
+			// exist in both removed and inserted
+			if _, existsR := removed[val]; existsR {
+				if _, existsI := inserted[val]; existsI {
+					changeEndIdx += 2
+				}
 			}
 
-			if _, exists := inserted[i-1]; exists{
-				changeEndIndex += 1
+			// exist in removed only and not in inserted
+			if _, existsR := removed[val]; existsR {
+				if _, existsI := inserted[val]; !existsI {
+					changeEndIdx += 1
+				}
+			}
+
+			// !exist in removed only and exist in inserted
+			if _, existsR := removed[val]; !existsR {
+				if _, existsI := inserted[val]; existsI {
+					changeEndIdx += 1
+				}
+			}
+
+			if idx+1 < len(changesTracker) && changesTracker[idx] != changesTracker[idx+1] {
+				lastChangeIteratedIndex = idx
+				break
 			}
 		}
 
+		// calculate context lines
 
-		ctxStart := CurrentDiffStartIdx - depth
-		ctxEnd := CurrentDiffEndIdx + depth
+		ctxLineStartIdx := changeStartIdx - depth
+		ctxLineEndIdx := changeEndIdx + depth
 
-		if ctxStart < 0 {
-			ctxStart = 0
+		if ctxLineStartIdx < 0 {
+			ctxLineStartIdx = 0
+		}
+		if ctxLineEndIdx > len(diff) {
+			ctxLineEndIdx = len(text2)
 		}
 
-		if ctxEnd > max(len(text1), len(text2)) {
-			ctxEnd = max(len(text1), len(text2))
-		}
-		diffIndex := dIdx
-		for i := ctxStart; i < ctxEnd; i++ {
-
-			if IndexExist(removed, i) {
-				if diffIndex < len(diff) {
-					fmt.Println(diff[diffIndex])
-					diffIndex++
-				}
-			} else if IndexExist(inserted, i+1) {
-				if diffIndex < len(diff) {
-					fmt.Println(diff[diffIndex])
-					diffIndex++
-				}
-
+		for i := ctxLineStartIdx; i < ctxLineEndIdx; i++ {
+			if changeStartIdx <= i && i < changeEndIdx {
+				fmt.Println(diff[i])
 			} else {
-				if i < len(text1) {
-					fmt.Println(text1[i])
-				} else if i < len(text2) {
-					fmt.Println(text2[i])
-				} else {
-					continue
-				}
-
-			}
-
-		}
-
-		for i, val := range lineChangesTracker {
-			if val == CurrentDiffEndIdx {
-				dIdx = i + 1
+				fmt.Println(text2[i])
 			}
 		}
-		if dIdx == len(lineChangesTracker) {
-			break
-		}
-
 	}
 }
 
