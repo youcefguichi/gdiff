@@ -12,6 +12,11 @@ const (
 	reset = "\033[0m"
 )
 
+type DiffItem struct {
+	Idx   int
+	Lines []string
+}
+
 func lcs(s1, s2 []string) ([]string, map[int]int, map[int]int) {
 	m := len(s1)
 	n := len(s2)
@@ -65,15 +70,15 @@ func lcs(s1, s2 []string) ([]string, map[int]int, map[int]int) {
 	return lcs, removed, inserted
 }
 
-func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted *map[int]int) ([]map[int]string, []int) {
+func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted *map[int]int) ([]DiffItem, []int) {
 	textaIdx := 0
 	textbIdx := 0
-	var diff []map[int]string
+	var diff []DiffItem
 	var changesTracker []int
-	i := 0
+	// i := 0
 
 	if len(*removed) == 0 && len(*inserted) == 0 {
-		return []map[int]string{}, []int{}
+		return []DiffItem{}, []int{}
 	}
 
 	for {
@@ -81,23 +86,28 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 		if textaIdx > len(texta)-1 && textbIdx > len(textb)-1 {
 			break
 		}
-
+		diffItem := DiffItem{}
 		if _, exists := (*removed)[textaIdx]; exists {
-			tempEntry := map[int]string{textaIdx: fmt.Sprintf("%s- %s %s", red, string(texta[textaIdx]), reset)}
-			diff = append(diff, tempEntry)
+			diffItem.Idx = textaIdx
+			diffItem.Lines = append(diffItem.Lines, fmt.Sprintf("%s- %s %s", red, string(texta[textaIdx]), reset))
 			changesTracker = append(changesTracker, textaIdx)
-			i++
 		}
 
 		if _, exists := (*inserted)[textbIdx]; exists {
-			tempEntry := map[int]string{textbIdx: fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset)}
-			diff = append(diff, tempEntry)
-			if i > 0 && changesTracker[i-1] != textbIdx {
-				changesTracker = append(changesTracker, textbIdx)
-				i++
-			}
+			diffItem.Idx = textbIdx
+			diffItem.Lines = append(diffItem.Lines, fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset))
+			changesTracker = append(changesTracker, textbIdx)
+			// tempEntry := map[int]string{textbIdx: fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset)}
+			// diff = append(diff, tempEntry)
+			// if i > 0 && changesTracker[i-1] != textbIdx {
+			// 	changesTracker = append(changesTracker, textbIdx)
+			// 	i++
+			// }
 		}
 
+		if len(diffItem.Lines) != 0 {
+			diff = append(diff, diffItem)
+		}
 		textaIdx++
 		textbIdx++
 	}
@@ -109,7 +119,7 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 
 // }
 
-func PrintDifff(diff []map[int]string, text1, text2 []string, removed map[int]int, inserted map[int]int, changesTracker []int, depth int) {
+func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, inserted map[int]int, changesTracker []int, depth int) {
 	var changeStartIdx int
 	var changeEndIdx int
 	lastChangeIteratedIndex := -1
@@ -161,32 +171,36 @@ func PrintDifff(diff []map[int]string, text1, text2 []string, removed map[int]in
 			ctxLineStartIdx = 0
 		}
 
-		if ctxLineEndIdx > len(diff) {
+		if ctxLineEndIdx > len(text2) {
 			ctxLineEndIdx = len(text2)
 		}
-		i := ctxLineStartIdx
-		for _, row := range diff{
-			// if changeStartIdx <= i && i < changeEndIdx {
-			// 	fmt.Println(diff[i])
-			// } else {
-			// 	fmt.Println(text2[i])
-			// }
-            item := row[]
-			if _, exists := removed[i]; exists {
-				fmt.Println(diff[i])
-			}
+		// i := ctxLineStartIdx
+		for i := ctxLineStartIdx; i < ctxLineEndIdx; i++ {
 
-			if _, exists := inserted[i]; exists {
-				fmt.Println(diff[i+1])
-				i++
-			}
-
-			if _, existsI := inserted[i]; !existsI {
-				if _, existsR := removed[i]; !existsR {
-					fmt.Println(text2[i])
+			if len(diff) > 0 && i < len(diff) {
+				for _, line := range diff[i].Lines {
+					fmt.Println(line)
 				}
-
+			} else {
+				fmt.Println(text2[i])
 			}
+
+			// item := row[]
+			// if _, exists := removed[i]; exists {
+			// 	fmt.Println(diff[i])
+			// }
+
+			// if _, exists := inserted[i]; exists {
+			// 	fmt.Println(diff[i+1])
+			// 	i++
+			// }
+
+			// if _, existsI := inserted[i]; !existsI {
+			// 	if _, existsR := removed[i]; !existsR {
+			// 		fmt.Println(text2[i])
+			// 	}
+
+			// }
 			i++
 
 		}
