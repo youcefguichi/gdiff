@@ -196,7 +196,7 @@ changeTracker = [6,7,8,10,12,13]
 
 
 
-diff = [{""- line 1"},{"+ line er"},"- line 2", "+ line fwef"]
+diff = [[0 - line 1],{"+ line er"},"- line 2", "+ line fwef"]
 removed = [0, 1]
 inserted = [0, 1]
 changesTracker = [0, 1]
@@ -207,4 +207,20 @@ i = 2
 
 
 for i in changesTracker:
+
+
+solution:
+
+create a struct
+
+type row {
+   idx int
+   lines []sring
+}
+
+for crnage context lines:
+if row.idx == ctxlineIdx:
+   print(row.lines)
+else:
+   print(text2.lines)   
 
