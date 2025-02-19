@@ -190,3 +190,21 @@ case 4:
 removed = [6,7,8]
 inserted = [10,12,13]
 changeTracker = [6,7,8,10,12,13]
+
+
+
+
+
+
+diff = [{""- line 1"},{"+ line er"},"- line 2", "+ line fwef"]
+removed = [0, 1]
+inserted = [0, 1]
+changesTracker = [0, 1]
+ctxLineStartIdx = 0 
+ctxLineEndIdx = 3
+
+i = 2
+
+
+for i in changesTracker:
+

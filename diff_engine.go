@@ -65,15 +65,15 @@ func lcs(s1, s2 []string) ([]string, map[int]int, map[int]int) {
 	return lcs, removed, inserted
 }
 
-func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted *map[int]int) ([]string, []int) {
+func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted *map[int]int) ([]map[int]string, []int) {
 	textaIdx := 0
 	textbIdx := 0
-	var diff []string
+	var diff []map[int]string
 	var changesTracker []int
-	i := -1
+	i := 0
 
 	if len(*removed) == 0 && len(*inserted) == 0 {
-		return []string{"No changes"}, []int{}
+		return []map[int]string{}, []int{}
 	}
 
 	for {
@@ -83,13 +83,15 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 		}
 
 		if _, exists := (*removed)[textaIdx]; exists {
-			diff = append(diff, fmt.Sprintf("%s- %s %s", red, string(texta[textaIdx]), reset))
+			tempEntry := map[int]string{textaIdx: fmt.Sprintf("%s- %s %s", red, string(texta[textaIdx]), reset)}
+			diff = append(diff, tempEntry)
 			changesTracker = append(changesTracker, textaIdx)
 			i++
 		}
 
 		if _, exists := (*inserted)[textbIdx]; exists {
-			diff = append(diff, fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset))
+			tempEntry := map[int]string{textbIdx: fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset)}
+			diff = append(diff, tempEntry)
 			if i > 0 && changesTracker[i-1] != textbIdx {
 				changesTracker = append(changesTracker, textbIdx)
 				i++
@@ -107,11 +109,11 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 
 // }
 
-func PrintDifff(diff, text1, text2 []string, removed map[int]int, inserted map[int]int, changesTracker []int, depth int) {
+func PrintDifff(diff []map[int]string, text1, text2 []string, removed map[int]int, inserted map[int]int, changesTracker []int, depth int) {
 	var changeStartIdx int
 	var changeEndIdx int
 	lastChangeIteratedIndex := -1
-    
+
 	if len(inserted) == 0 && len(removed) == 0 {
 		return
 	}
@@ -158,16 +160,35 @@ func PrintDifff(diff, text1, text2 []string, removed map[int]int, inserted map[i
 		if ctxLineStartIdx < 0 {
 			ctxLineStartIdx = 0
 		}
+
 		if ctxLineEndIdx > len(diff) {
 			ctxLineEndIdx = len(text2)
 		}
-
-		for i := ctxLineStartIdx; i < ctxLineEndIdx; i++ {
-			if changeStartIdx <= i && i < changeEndIdx {
+		i := ctxLineStartIdx
+		for _, row := range diff{
+			// if changeStartIdx <= i && i < changeEndIdx {
+			// 	fmt.Println(diff[i])
+			// } else {
+			// 	fmt.Println(text2[i])
+			// }
+            item := row[]
+			if _, exists := removed[i]; exists {
 				fmt.Println(diff[i])
-			} else {
-				fmt.Println(text2[i])
 			}
+
+			if _, exists := inserted[i]; exists {
+				fmt.Println(diff[i+1])
+				i++
+			}
+
+			if _, existsI := inserted[i]; !existsI {
+				if _, existsR := removed[i]; !existsR {
+					fmt.Println(text2[i])
+				}
+
+			}
+			i++
+
 		}
 	}
 }
