@@ -20,8 +20,8 @@ type DiffItem struct {
 func lcs(s1, s2 []string) ([]string, map[int]int, map[int]int) {
 	m := len(s1)
 	n := len(s2)
-	cur := make([]int, m+1)
-	prev := make([]int, m+1)
+	cur := make([]int, n+1)
+	prev := make([]int, n+1)
 	var lcs []string
 	inserted := make(map[int]int)
 	removed := make(map[int]int)
@@ -80,7 +80,7 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 	if len(*removed) == 0 && len(*inserted) == 0 {
 		return []DiffItem{}, []int{}
 	}
-
+	trackerIndex := 0
 	for {
 
 		if textaIdx > len(texta)-1 && textbIdx > len(textb)-1 {
@@ -91,18 +91,19 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 			diffItem.Idx = textaIdx
 			diffItem.Lines = append(diffItem.Lines, fmt.Sprintf("%s- %s %s", red, string(texta[textaIdx]), reset))
 			changesTracker = append(changesTracker, textaIdx)
+			trackerIndex++
 		}
 
 		if _, exists := (*inserted)[textbIdx]; exists {
 			diffItem.Idx = textbIdx
 			diffItem.Lines = append(diffItem.Lines, fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset))
-			changesTracker = append(changesTracker, textbIdx)
+			//changesTracker = append(changesTracker, textbIdx)
 			// tempEntry := map[int]string{textbIdx: fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset)}
 			// diff = append(diff, tempEntry)
-			// if i > 0 && changesTracker[i-1] != textbIdx {
-			// 	changesTracker = append(changesTracker, textbIdx)
-			// 	i++
-			// }
+			if trackerIndex > 0 && changesTracker[trackerIndex-1] != textbIdx {
+				changesTracker = append(changesTracker, textbIdx)
+				trackerIndex++
+			}
 		}
 
 		if len(diffItem.Lines) != 0 {
@@ -118,102 +119,136 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 // func hashList(list []int) map[string]bool {
 
 // }
+func calculateConsecutiveChanges(changesTracker []int, changeStartIdx int, changeEndIdx int, removed map[int]int, inserted map[int]int) (int, int) {
+
+	for _, val := range changesTracker {
+
+		// exist in both removed and inserted
+		if _, existsR := removed[val]; existsR {
+			if _, existsI := inserted[val]; existsI {
+				changeEndIdx += 1
+			}
+		}
+
+		// exist in removed only and not in inserted
+		if _, existsR := removed[val]; existsR {
+			if _, existsI := inserted[val]; !existsI {
+				changeEndIdx += 1
+			}
+		}
+
+		// !exist in removed only and exist in inserted
+		if _, existsR := removed[val]; !existsR {
+			if _, existsI := inserted[val]; existsI {
+				changeEndIdx += 1
+			}
+		}
+
+		// if idx+1 < len(changesTracker) && changesTracker[idx] != changesTracker[idx+1] {
+		// 	lastChangeIteratedIndex = idx
+		// 	break
+		// }
+	}
+	return changeStartIdx, changeEndIdx
+}
+
+func calculateContextLines(changeStartIdx int, changeEndIdx int, text2 []string, depth int) (int, int) {
+
+	ctxLineStartIdx := changeStartIdx - depth
+	ctxLineEndIdx := changeEndIdx + depth
+
+	if ctxLineStartIdx < 0 {
+		ctxLineStartIdx = 0
+	}
+
+	if ctxLineEndIdx > len(text2) {
+		ctxLineEndIdx = len(text2)
+	}
+
+	return ctxLineStartIdx, ctxLineEndIdx
+
+}
+
+func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []DiffItem, text2 []string) {
+
+	for j := ctxLineStartIdx; j < ctxLineEndIdx; j++ {
+		found := false
+		for _, row := range diff {
+
+			if row.Idx == j {
+				for _, line := range row.Lines {
+					fmt.Println(line)
+				}
+				found = true
+				break
+			}
+
+		}
+
+		if !found {
+			fmt.Println(text2[j])
+		}
+	}
+
+}
+func findNextChangeSequence(diff []DiffItem, Idx int, changesTracker []int) (int, int, []int) {
+	for i, row := range diff {
+		if i+1 >= len(diff) {
+			break
+		}
+
+		if row.Idx+1 == diff[i+1].Idx {
+			Idx++
+		} else {
+			break
+		}
+
+	}
+	// if Idx >= len(diff) {
+	// 	break
+	// }
+	changeStartIdx := diff[Idx].Idx
+	changeEndIdx := diff[Idx].Idx
+	changesT := changesTracker[Idx:]
+
+	return changeStartIdx, changeEndIdx, changesT
+}
 
 func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, inserted map[int]int, changesTracker []int, depth int) {
 	var changeStartIdx int
 	var changeEndIdx int
-	lastChangeIteratedIndex := -1
 
 	if len(inserted) == 0 && len(removed) == 0 {
 		return
 	}
 
-	for changeEndIdx < len(diff) {
-		changeStartIdx = lastChangeIteratedIndex + 1
-		changeEndIdx = lastChangeIteratedIndex + 1
+	changeStartIdx = diff[0].Idx
+	changeEndIdx = diff[0].Idx
+	Idx := 0
+	for changeStartIdx <= diff[len(diff)-1].Idx {
 
-		// claculate consecutive changes width
-		for idx, val := range changesTracker {
+		changeStartIdx, changeEndIdx = calculateConsecutiveChanges(
+			changesTracker,
+			changeStartIdx,
+			changeEndIdx,
+			removed,
+			inserted,
+		)
 
-			// exist in both removed and inserted
-			if _, existsR := removed[val]; existsR {
-				if _, existsI := inserted[val]; existsI {
-					changeEndIdx += 2
-				}
-			}
+		ctxLineStartIdx, ctxLineEndIdx := calculateContextLines(
+			changeStartIdx,
+			changeEndIdx,
+			text2,
+			depth,
+		)
 
-			// exist in removed only and not in inserted
-			if _, existsR := removed[val]; existsR {
-				if _, existsI := inserted[val]; !existsI {
-					changeEndIdx += 1
-				}
-			}
+		displayDiffWithCtxLines(ctxLineStartIdx, ctxLineEndIdx, diff, text2) // i := ctxLineStartIdx
+		Idx++
+        
+		findNextChangeSequence(diff, Idx, changesTracker)
+		
 
-			// !exist in removed only and exist in inserted
-			if _, existsR := removed[val]; !existsR {
-				if _, existsI := inserted[val]; existsI {
-					changeEndIdx += 1
-				}
-			}
-
-			if idx+1 < len(changesTracker) && changesTracker[idx] != changesTracker[idx+1] {
-				lastChangeIteratedIndex = idx
-				break
-			}
-		}
-
-		// calculate context lines
-
-		ctxLineStartIdx := changeStartIdx - depth
-		ctxLineEndIdx := changeEndIdx + depth
-
-		if ctxLineStartIdx < 0 {
-			ctxLineStartIdx = 0
-		}
-
-		if ctxLineEndIdx > len(text2) {
-			ctxLineEndIdx = len(text2)
-		}
-		// i := ctxLineStartIdx
-		for i := ctxLineStartIdx; i < ctxLineEndIdx; i++ {
-
-			if len(diff) > 0 && i < len(diff) {
-				for _, line := range diff[i].Lines {
-					fmt.Println(line)
-				}
-			} else {
-				fmt.Println(text2[i])
-			}
-
-			// item := row[]
-			// if _, exists := removed[i]; exists {
-			// 	fmt.Println(diff[i])
-			// }
-
-			// if _, exists := inserted[i]; exists {
-			// 	fmt.Println(diff[i+1])
-			// 	i++
-			// }
-
-			// if _, existsI := inserted[i]; !existsI {
-			// 	if _, existsR := removed[i]; !existsR {
-			// 		fmt.Println(text2[i])
-			// 	}
-
-			// }
-			i++
-
-		}
 	}
-}
-
-func IndexExist(s []int, e int) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
 }
 
 func readFile(filename string) []string {
