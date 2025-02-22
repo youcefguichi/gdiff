@@ -2,5 +2,3 @@ ergeh
 line23
 line 3
 line 4
-line sdf
-line 6

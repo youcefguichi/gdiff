@@ -116,40 +116,27 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 	return diff, changesTracker
 }
 
-// func hashList(list []int) map[string]bool {
+func calculateConsecutiveChanges(changesTracker []int) (int, int, int) {
 
-// }
-func calculateConsecutiveChanges(changesTracker []int, changeStartIdx int, changeEndIdx int, removed map[int]int, inserted map[int]int) (int, int) {
+	changeStartIdx := changesTracker[0]
+	changeEndIdx := changesTracker[0]
+    count := 1
 
-	for _, val := range changesTracker {
+	if len(changesTracker) == 1 { return changeStartIdx, changeEndIdx, count }
+           
+	for i, val := range changesTracker[:len(changesTracker)-1] {
 
-		// exist in both removed and inserted
-		if _, existsR := removed[val]; existsR {
-			if _, existsI := inserted[val]; existsI {
-				changeEndIdx += 1
-			}
+		if val+1 == changesTracker[i+1] {
+			changeEndIdx++
+			count++
+
+		}else{
+			break
 		}
 
-		// exist in removed only and not in inserted
-		if _, existsR := removed[val]; existsR {
-			if _, existsI := inserted[val]; !existsI {
-				changeEndIdx += 1
-			}
-		}
-
-		// !exist in removed only and exist in inserted
-		if _, existsR := removed[val]; !existsR {
-			if _, existsI := inserted[val]; existsI {
-				changeEndIdx += 1
-			}
-		}
-
-		// if idx+1 < len(changesTracker) && changesTracker[idx] != changesTracker[idx+1] {
-		// 	lastChangeIteratedIndex = idx
-		// 	break
-		// }
 	}
-	return changeStartIdx, changeEndIdx
+
+	return changeStartIdx, changeEndIdx, count
 }
 
 func calculateContextLines(changeStartIdx int, changeEndIdx int, text2 []string, depth int) (int, int) {
@@ -157,13 +144,8 @@ func calculateContextLines(changeStartIdx int, changeEndIdx int, text2 []string,
 	ctxLineStartIdx := changeStartIdx - depth
 	ctxLineEndIdx := changeEndIdx + depth
 
-	if ctxLineStartIdx < 0 {
-		ctxLineStartIdx = 0
-	}
-
-	if ctxLineEndIdx > len(text2) {
-		ctxLineEndIdx = len(text2)
-	}
+	if ctxLineStartIdx < 0 { ctxLineStartIdx = 0 }
+	if ctxLineEndIdx  > len(text2) { ctxLineEndIdx = len(text2) }
 
 	return ctxLineStartIdx, ctxLineEndIdx
 
@@ -171,7 +153,7 @@ func calculateContextLines(changeStartIdx int, changeEndIdx int, text2 []string,
 
 func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []DiffItem, text2 []string) {
 
-	for j := ctxLineStartIdx; j < ctxLineEndIdx; j++ {
+	for j := ctxLineStartIdx; j <= ctxLineEndIdx; j++ {
 		found := false
 		for _, row := range diff {
 
@@ -191,49 +173,23 @@ func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []Diff
 	}
 
 }
-func findNextChangeSequence(diff []DiffItem, Idx int, changesTracker []int) (int, int, []int) {
-	for i, row := range diff {
-		if i+1 >= len(diff) {
-			break
-		}
-
-		if row.Idx+1 == diff[i+1].Idx {
-			Idx++
-		} else {
-			break
-		}
-
-	}
-	// if Idx >= len(diff) {
-	// 	break
-	// }
-	changeStartIdx := diff[Idx].Idx
-	changeEndIdx := diff[Idx].Idx
-	changesT := changesTracker[Idx:]
-
-	return changeStartIdx, changeEndIdx, changesT
-}
 
 func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, inserted map[int]int, changesTracker []int, depth int) {
 	var changeStartIdx int
 	var changeEndIdx int
+	var nextChangeIdx int
 
 	if len(inserted) == 0 && len(removed) == 0 {
 		return
 	}
 
-	changeStartIdx = diff[0].Idx
-	changeEndIdx = diff[0].Idx
-	Idx := 0
-	for changeStartIdx <= diff[len(diff)-1].Idx {
+	for {
 
-		changeStartIdx, changeEndIdx = calculateConsecutiveChanges(
-			changesTracker,
-			changeStartIdx,
-			changeEndIdx,
-			removed,
-			inserted,
-		)
+		if len(changesTracker) == 0 {
+			break
+		}
+
+		changeStartIdx, changeEndIdx, nextChangeIdx = calculateConsecutiveChanges(changesTracker)
 
 		ctxLineStartIdx, ctxLineEndIdx := calculateContextLines(
 			changeStartIdx,
@@ -242,11 +198,9 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 			depth,
 		)
 
-		displayDiffWithCtxLines(ctxLineStartIdx, ctxLineEndIdx, diff, text2) // i := ctxLineStartIdx
-		Idx++
-        
-		findNextChangeSequence(diff, Idx, changesTracker)
+		displayDiffWithCtxLines(ctxLineStartIdx, ctxLineEndIdx, diff, text2)
 		
+		changesTracker = changesTracker[nextChangeIdx:]
 
 	}
 }

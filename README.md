@@ -224,3 +224,30 @@ if row.idx == ctxlineIdx:
 else:
    print(text2.lines)   
 
+
+removed = [0, 1,12]
+inserted = [0, 1,12]
+changesTracker = [0, 1, 12]
+
+
+new solution:
+
+loop until len(changesTracker == 0 ):
+
+- changeStartIdx, changeEndIdx = calculateConsecutiveChanges(changesTracker)
+- ctxLinesStartIdx, ctxLinesEndIdx = calculateContextLine(changeStartIdx, changeEndIdx, depth, text2, diff)
+- displayDiffWithCtxLines(ctxLinesStartIdx, ctxLinesEndIdx, diff, text2)
+<!-- - changesTracker = changesTracker -->
+for i, val in range(changeTracker):
+    changesTracker = changesTracker[1:]
+    if val == changeEndIdx:
+            break
+
+
+extend solution:
+case1:
+changesTracker[0,1,4]
+
+
+case2
+
