@@ -249,5 +249,19 @@ case1:
 changesTracker[0,1,4]
 
 
-case2
+fix Context Lines Issue
 
+
+text1 =  [0,1,2,3,4]
+text2 =  [0,1,2]
+
+if ctxstartline < 0 : ctxStartLine = 0
+if ctxEndLine > len(text2) and changeEndIdx < len(text2): 
+
+
+
+
+## Next steps 
+
+- Fix Context lines overlaping
+- display all the deleted consecutives then the addition, currently it is being displayed line by line, deleted followed by an addition 

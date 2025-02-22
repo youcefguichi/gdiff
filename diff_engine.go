@@ -104,6 +104,10 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 				changesTracker = append(changesTracker, textbIdx)
 				trackerIndex++
 			}
+
+			if len(changesTracker) == 0 && len(*removed) == 0 {
+				changesTracker = append(changesTracker, textbIdx)
+			}
 		}
 
 		if len(diffItem.Lines) != 0 {
@@ -120,17 +124,19 @@ func calculateConsecutiveChanges(changesTracker []int) (int, int, int) {
 
 	changeStartIdx := changesTracker[0]
 	changeEndIdx := changesTracker[0]
-    count := 1
+	count := 1
 
-	if len(changesTracker) == 1 { return changeStartIdx, changeEndIdx, count }
-           
+	if len(changesTracker) == 1 {
+		return changeStartIdx, changeEndIdx, count
+	}
+
 	for i, val := range changesTracker[:len(changesTracker)-1] {
 
 		if val+1 == changesTracker[i+1] {
 			changeEndIdx++
 			count++
 
-		}else{
+		} else {
 			break
 		}
 
@@ -139,19 +145,28 @@ func calculateConsecutiveChanges(changesTracker []int) (int, int, int) {
 	return changeStartIdx, changeEndIdx, count
 }
 
-func calculateContextLines(changeStartIdx int, changeEndIdx int, text2 []string, depth int) (int, int) {
+func calculateContextLines(changeStartIdx int, changeEndIdx int, text1, text2 []string, depth int) (int, int) {
 
 	ctxLineStartIdx := changeStartIdx - depth
 	ctxLineEndIdx := changeEndIdx + depth
 
-	if ctxLineStartIdx < 0 { ctxLineStartIdx = 0 }
-	if ctxLineEndIdx  > len(text2) { ctxLineEndIdx = len(text2) }
+	if ctxLineStartIdx < 0 {
+		ctxLineStartIdx = 0
+	}
+
+	if ctxLineEndIdx > len(text2) && changeEndIdx < len(text2) {
+		ctxLineEndIdx = len(text2) - 1
+	}
+
+	if ctxLineEndIdx > len(text2) && changeEndIdx > len(text2) {
+		ctxLineEndIdx = len(text1) - 1
+	}
 
 	return ctxLineStartIdx, ctxLineEndIdx
 
 }
 
-func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []DiffItem, text2 []string) {
+func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []DiffItem, text1, text2 []string) {
 
 	for j := ctxLineStartIdx; j <= ctxLineEndIdx; j++ {
 		found := false
@@ -168,7 +183,14 @@ func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []Diff
 		}
 
 		if !found {
-			fmt.Println(text2[j])
+			if ctxLineEndIdx > len(text2) && ctxLineEndIdx < len(text1) {
+				fmt.Println(text1[j])
+			}
+
+			if ctxLineEndIdx < len(text2) && ctxLineEndIdx < len(text1) {
+				fmt.Println(text2[j])
+			}
+
 		}
 	}
 
@@ -194,12 +216,13 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 		ctxLineStartIdx, ctxLineEndIdx := calculateContextLines(
 			changeStartIdx,
 			changeEndIdx,
+			text1,
 			text2,
 			depth,
 		)
 
-		displayDiffWithCtxLines(ctxLineStartIdx, ctxLineEndIdx, diff, text2)
-		
+		displayDiffWithCtxLines(ctxLineStartIdx, ctxLineEndIdx, diff, text1, text2)
+
 		changesTracker = changesTracker[nextChangeIdx:]
 
 	}
