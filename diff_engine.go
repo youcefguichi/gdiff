@@ -97,9 +97,7 @@ func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted
 		if _, exists := (*inserted)[textbIdx]; exists {
 			diffItem.Idx = textbIdx
 			diffItem.Lines = append(diffItem.Lines, fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset))
-			//changesTracker = append(changesTracker, textbIdx)
-			// tempEntry := map[int]string{textbIdx: fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset)}
-			// diff = append(diff, tempEntry)
+
 			if trackerIndex > 0 && changesTracker[trackerIndex-1] != textbIdx {
 				changesTracker = append(changesTracker, textbIdx)
 				trackerIndex++
@@ -166,7 +164,16 @@ func calculateContextLines(changeStartIdx int, changeEndIdx int, text1, text2 []
 
 }
 
-func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []DiffItem, text1, text2 []string) {
+func overlap(a1, a2, b1, b2 int) bool {
+	return a1 <= b2 && b1 <= a2
+}
+
+func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []DiffItem, text1, text2 []string, ctxLinesCache *[]int) {
+
+	if len(*ctxLinesCache) > 2 && overlap(ctxLineStartIdx, ctxLineEndIdx, (*ctxLinesCache)[0], (*ctxLinesCache)[1]) {
+		return
+	}
+	
 
 	for j := ctxLineStartIdx; j <= ctxLineEndIdx; j++ {
 		found := false
@@ -200,6 +207,7 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 	var changeStartIdx int
 	var changeEndIdx int
 	var nextChangeIdx int
+	var ctxLinesCache []int
 
 	if len(inserted) == 0 && len(removed) == 0 {
 		return
@@ -220,10 +228,21 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 			text2,
 			depth,
 		)
-
-		displayDiffWithCtxLines(ctxLineStartIdx, ctxLineEndIdx, diff, text1, text2)
+		ctxLinesCache = append(ctxLinesCache, ctxLineStartIdx)
+		ctxLinesCache = append(ctxLinesCache, ctxLineEndIdx)
+		
+		displayDiffWithCtxLines(ctxLineStartIdx,
+			ctxLineEndIdx,
+			diff,
+			text1,
+			text2,
+			&ctxLinesCache,
+		)
 
 		changesTracker = changesTracker[nextChangeIdx:]
+		ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
+	
+		
 
 	}
 }

@@ -9,7 +9,7 @@ func main() {
 	_, removed, inserted := lcs(file1, file2)
 	diff, changesTracker := GenerateDiff(file1, file2, &removed, &inserted)
 	// fmt.Println(diff)
-	PrintDifff(diff, file1, file2, removed, inserted, changesTracker, 2)
+	PrintDifff(diff, file1, file2, removed, inserted, changesTracker, 7)
 	// for _, line := range diff {
 	// 	fmt.Println(line)
 	// }
