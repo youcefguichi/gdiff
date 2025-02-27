@@ -125,7 +125,7 @@ func calculateConsecutiveChanges(changesTracker []int) (int, int, int) {
 	count := 1
 
 	if len(changesTracker) == 1 {
-		return changeStartIdx, changeEndIdx, count
+		return changeStartIdx, changeEndIdx, 0
 	}
 
 	for i, val := range changesTracker[:len(changesTracker)-1] {
@@ -168,12 +168,11 @@ func overlap(a1, a2, b1, b2 int) bool {
 	return a1 <= b2 && b1 <= a2
 }
 
-func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []DiffItem, text1, text2 []string, ctxLinesCache *[]int) {
+func mergeIndices(a1, a2, b1, b2 int) (int, int) {
+	return min(a1, b1), max(a2, b2)
+}
 
-	if len(*ctxLinesCache) > 2 && overlap(ctxLineStartIdx, ctxLineEndIdx, (*ctxLinesCache)[0], (*ctxLinesCache)[1]) {
-		return
-	}
-	
+func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []DiffItem, text1, text2 []string, ctxLinesCache *[]int) {
 
 	for j := ctxLineStartIdx; j <= ctxLineEndIdx; j++ {
 		found := false
@@ -208,6 +207,8 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 	var changeEndIdx int
 	var nextChangeIdx int
 	var ctxLinesCache []int
+	var overlapStartIdx int
+	var overlapEndIdx int
 
 	if len(inserted) == 0 && len(removed) == 0 {
 		return
@@ -230,7 +231,25 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 		)
 		ctxLinesCache = append(ctxLinesCache, ctxLineStartIdx)
 		ctxLinesCache = append(ctxLinesCache, ctxLineEndIdx)
-		
+
+		if overlap(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1]) {
+
+			if len(ctxLinesCache) > 2 {
+				overlapStartIdx, overlapEndIdx = mergeIndices(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1])
+				ctxLinesCache = append(ctxLinesCache, overlapStartIdx)
+				ctxLinesCache = append(ctxLinesCache, overlapEndIdx)
+				ctxLinesCache = ctxLinesCache[:len(ctxLinesCache)-2]
+				changesTracker = changesTracker[1:]
+			}
+
+			changesTracker = changesTracker[nextChangeIdx:]
+			ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
+			
+			if len(changesTracker) != 0 {
+				continue
+			}
+		}
+
 		displayDiffWithCtxLines(ctxLineStartIdx,
 			ctxLineEndIdx,
 			diff,
@@ -238,11 +257,9 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 			text2,
 			&ctxLinesCache,
 		)
-
-		changesTracker = changesTracker[nextChangeIdx:]
-		ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
-	
-		
+        
+		// changesTracker = changesTracker[nextChangeIdx:]
+		// ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
 
 	}
 }
