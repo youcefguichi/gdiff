@@ -197,6 +197,8 @@ func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []Diff
 				fmt.Println(text2[j])
 			}
 
+			
+
 		}
 	}
 
@@ -209,6 +211,8 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 	var ctxLinesCache []int
 	var overlapStartIdx int
 	var overlapEndIdx int
+	var ctxLineStartIdx int
+	var ctxLineEndIdx int
 
 	if len(inserted) == 0 && len(removed) == 0 {
 		return
@@ -220,48 +224,65 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 			break
 		}
 
-		changeStartIdx, changeEndIdx, nextChangeIdx = calculateConsecutiveChanges(changesTracker)
+		for {
 
-		ctxLineStartIdx, ctxLineEndIdx := calculateContextLines(
-			changeStartIdx,
-			changeEndIdx,
-			text1,
-			text2,
-			depth,
-		)
-		ctxLinesCache = append(ctxLinesCache, ctxLineStartIdx)
-		ctxLinesCache = append(ctxLinesCache, ctxLineEndIdx)
+			changeStartIdx, changeEndIdx, nextChangeIdx = calculateConsecutiveChanges(changesTracker)
 
-		if overlap(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1]) {
+			ctxLineStartIdx, ctxLineEndIdx = calculateContextLines(
+				changeStartIdx,
+				changeEndIdx,
+				text1,
+				text2,
+				depth,
+			)
 
-			if len(ctxLinesCache) > 2 {
+			ctxLinesCache = append(ctxLinesCache, ctxLineStartIdx)
+			ctxLinesCache = append(ctxLinesCache, ctxLineEndIdx)
+
+			if len(ctxLinesCache) > 2 && overlap(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1]) {
 				overlapStartIdx, overlapEndIdx = mergeIndices(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1])
 				ctxLinesCache = append(ctxLinesCache, overlapStartIdx)
 				ctxLinesCache = append(ctxLinesCache, overlapEndIdx)
-				ctxLinesCache = ctxLinesCache[:len(ctxLinesCache)-2]
-				changesTracker = changesTracker[1:]
+				ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
+			}
+
+			if len(ctxLinesCache) > 2 && !overlap(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1]) {
+				ctxLinesCache = ctxLinesCache[:2]
+				break
+
 			}
 
 			changesTracker = changesTracker[nextChangeIdx:]
-			ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
-			
-			if len(changesTracker) != 0 {
-				continue
+
+			if len(changesTracker) == 1 && nextChangeIdx == 0 {
+				changesTracker = changesTracker[:0]
+				break
 			}
+
+			if len(changesTracker) == 0 {
+				break
+			}
+
 		}
 
-		displayDiffWithCtxLines(ctxLineStartIdx,
-			ctxLineEndIdx,
-			diff,
-			text1,
-			text2,
-			&ctxLinesCache,
-		)
-        
-		// changesTracker = changesTracker[nextChangeIdx:]
-		// ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
+		for i := 0; i < len(ctxLinesCache); i += 2 {
+
+			ctxLineStartIdx = ctxLinesCache[i]
+			ctxLineEndIdx = ctxLinesCache[i+1]
+
+			displayDiffWithCtxLines(ctxLineStartIdx,
+				ctxLineEndIdx,
+				diff,
+				text1,
+				text2,
+				&ctxLinesCache,
+			)
+		}
+
+		ctxLinesCache = ctxLinesCache[:0]
 
 	}
+
 }
 
 func readFile(filename string) []string {
