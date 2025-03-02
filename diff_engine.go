@@ -185,23 +185,15 @@ func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []Diff
 				found = true
 				break
 			}
-
 		}
-
 		if !found {
-			if ctxLineEndIdx > len(text2) && ctxLineEndIdx < len(text1) {
+			if ctxLineEndIdx > len(text2) {
 				fmt.Println(text1[j])
-			}
-
-			if ctxLineEndIdx < len(text2) && ctxLineEndIdx < len(text1) {
+			} else {
 				fmt.Println(text2[j])
 			}
-
-			
-
 		}
 	}
-
 }
 
 func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, inserted map[int]int, changesTracker []int, depth int) {
