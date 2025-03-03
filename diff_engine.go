@@ -7,24 +7,45 @@ import (
 )
 
 const (
-	green = "\033[32m"
-	red   = "\033[31m"
-	reset = "\033[0m"
+	GREEN = "\033[32m"
+	RED   = "\033[31m"
+	RESET = "\033[0m"
 )
 
-type DiffItem struct {
-	Idx   int
-	Lines []string
+type Change struct {
+	Idx  int
+	Prev string
+	Curr string
 }
 
-func lcs(s1, s2 []string) ([]string, map[int]int, map[int]int) {
+type DiffChecker struct {
+	sourceText     []string
+	revisedText    []string
+	removed        map[int]int
+	inserted       map[int]int
+	changesTracker []int
+	diff           []Change
+	depth          int
+}
+
+func NewDiffChecker(sourceText, revisedText []string, depth int) *DiffChecker {
+	return &DiffChecker{
+		sourceText:     sourceText,
+		revisedText:    revisedText,
+		depth:          depth,
+		removed:        make(map[int]int),
+		inserted:       make(map[int]int),
+		changesTracker: make([]int, 0),
+		diff:           make([]Change, 0),
+	}
+}
+
+func (d *DiffChecker) lcs(s1, s2 []string) {
 	m := len(s1)
 	n := len(s2)
 	cur := make([]int, n+1)
 	prev := make([]int, n+1)
 	var lcs []string
-	inserted := make(map[int]int)
-	removed := make(map[int]int)
 
 	// Calculate lcs
 	for i := 1; i < m+1; i++ {
@@ -49,88 +70,85 @@ func lcs(s1, s2 []string) ([]string, map[int]int, map[int]int) {
 			i--
 			j--
 		} else if prev[j] == prev[j-1] {
-			inserted[j-1] = 1
+			d.inserted[j-1] = 1
 			j--
 		} else {
-			removed[i-1] = 1
+			d.removed[i-1] = 1
 			i--
 		}
 	}
 
 	for i > 0 {
-		removed[i-1] = 1
+		d.removed[i-1] = 1
 		i--
 	}
 
 	for j > 0 {
-		inserted[j-1] = 1
+		d.inserted[j-1] = 1
 		j--
 	}
 
-	return lcs, removed, inserted
 }
 
-func GenerateDiff(texta []string, textb []string, removed *map[int]int, inserted *map[int]int) ([]DiffItem, []int) {
-	textaIdx := 0
-	textbIdx := 0
-	var diff []DiffItem
-	var changesTracker []int
-	// i := 0
+func (d *DiffChecker) GenerateDiff() {
+	var sourceTextIdx int
+	var revisedTextIdx int
+	var trackerIndex int
+	var change Change
 
-	if len(*removed) == 0 && len(*inserted) == 0 {
-		return []DiffItem{}, []int{}
+	if len(d.removed) == 0 && len(d.inserted) == 0 {
+		return
 	}
-	trackerIndex := 0
+
 	for {
 
-		if textaIdx > len(texta)-1 && textbIdx > len(textb)-1 {
+		if sourceTextIdx > len(d.sourceText)-1 && revisedTextIdx > len(d.revisedText)-1 {
 			break
 		}
-		diffItem := DiffItem{}
-		if _, exists := (*removed)[textaIdx]; exists {
-			diffItem.Idx = textaIdx
-			diffItem.Lines = append(diffItem.Lines, fmt.Sprintf("%s- %s %s", red, string(texta[textaIdx]), reset))
-			changesTracker = append(changesTracker, textaIdx)
+
+		if _, exists := d.removed[sourceTextIdx]; exists {
+			change.Idx = sourceTextIdx
+			change.Prev = fmt.Sprintf("%s- %s %s", RED, string(d.sourceText[sourceTextIdx]), RESET)
+			d.changesTracker = append(d.changesTracker, sourceTextIdx)
 			trackerIndex++
 		}
 
-		if _, exists := (*inserted)[textbIdx]; exists {
-			diffItem.Idx = textbIdx
-			diffItem.Lines = append(diffItem.Lines, fmt.Sprintf("%s+ %s %s", green, string(textb[textbIdx]), reset))
+		if _, exists := d.inserted[revisedTextIdx]; exists {
+			change.Idx = revisedTextIdx
+			change.Curr = fmt.Sprintf("%s+ %s %s", GREEN, string(d.revisedText[revisedTextIdx]), RESET)
 
-			if trackerIndex > 0 && changesTracker[trackerIndex-1] != textbIdx {
-				changesTracker = append(changesTracker, textbIdx)
+			if trackerIndex > 0 && d.changesTracker[trackerIndex-1] != revisedTextIdx {
+				d.changesTracker = append(d.changesTracker, revisedTextIdx)
 				trackerIndex++
 			}
 
-			if len(changesTracker) == 0 && len(*removed) == 0 {
-				changesTracker = append(changesTracker, textbIdx)
+			if len(d.changesTracker) == 0 && len(d.removed) == 0 {
+				d.changesTracker = append(d.changesTracker, revisedTextIdx)
 			}
 		}
 
-		if len(diffItem.Lines) != 0 {
-			diff = append(diff, diffItem)
+		if change.Prev != "" || change.Curr != "" {
+			d.diff = append(d.diff, change)
 		}
-		textaIdx++
-		textbIdx++
-	}
 
-	return diff, changesTracker
+		sourceTextIdx++
+		revisedTextIdx++
+	}
 }
 
-func calculateConsecutiveChanges(changesTracker []int) (int, int, int) {
+func (d *DiffChecker) calculateConsecutiveChanges() (int, int, int) {
 
-	changeStartIdx := changesTracker[0]
-	changeEndIdx := changesTracker[0]
+	changeStartIdx := d.changesTracker[0]
+	changeEndIdx := d.changesTracker[0]
 	count := 1
 
-	if len(changesTracker) == 1 {
+	if len(d.changesTracker) == 1 {
 		return changeStartIdx, changeEndIdx, 0
 	}
 
-	for i, val := range changesTracker[:len(changesTracker)-1] {
+	for i, val := range d.changesTracker[:len(d.changesTracker)-1] {
 
-		if val+1 == changesTracker[i+1] {
+		if val+1 == d.changesTracker[i+1] {
 			changeEndIdx++
 			count++
 
@@ -143,24 +161,24 @@ func calculateConsecutiveChanges(changesTracker []int) (int, int, int) {
 	return changeStartIdx, changeEndIdx, count
 }
 
-func calculateContextLines(changeStartIdx int, changeEndIdx int, text1, text2 []string, depth int) (int, int) {
+func (d *DiffChecker) calculateContextLines(changeStartIdx int, changeEndIdx int) (int, int) {
 
-	ctxLineStartIdx := changeStartIdx - depth
-	ctxLineEndIdx := changeEndIdx + depth
+	contextChangeStartIdx := changeStartIdx - d.depth
+	contextChangeEndIdx := changeEndIdx + d.depth
 
-	if ctxLineStartIdx < 0 {
-		ctxLineStartIdx = 0
+	if contextChangeStartIdx < 0 {
+		contextChangeStartIdx = 0
 	}
 
-	if ctxLineEndIdx > len(text2) && changeEndIdx < len(text2) {
-		ctxLineEndIdx = len(text2) - 1
+	if contextChangeEndIdx > len(d.revisedText) && changeEndIdx < len(d.revisedText) {
+		contextChangeEndIdx = len(d.revisedText) - 1
 	}
 
-	if ctxLineEndIdx > len(text2) && changeEndIdx > len(text2) {
-		ctxLineEndIdx = len(text1) - 1
+	if contextChangeEndIdx > len(d.revisedText) && changeEndIdx > len(d.revisedText) {
+		contextChangeEndIdx = len(d.sourceText) - 1
 	}
 
-	return ctxLineStartIdx, ctxLineEndIdx
+	return contextChangeStartIdx, contextChangeEndIdx
 
 }
 
@@ -172,31 +190,40 @@ func mergeIndices(a1, a2, b1, b2 int) (int, int) {
 	return min(a1, b1), max(a2, b2)
 }
 
-func displayDiffWithCtxLines(ctxLineStartIdx int, ctxLineEndIdx int, diff []DiffItem, text1, text2 []string, ctxLinesCache *[]int) {
+func (d *DiffChecker) printDiffWithContext(contextChangeStartIdx int, contextChangeEndIdx int, ctxLinesCache *[]int) {
 
-	for j := ctxLineStartIdx; j <= ctxLineEndIdx; j++ {
+	for j := contextChangeStartIdx; j <= contextChangeEndIdx; j++ {
 		found := false
-		for _, row := range diff {
+		for _, row := range d.diff {
 
 			if row.Idx == j {
-				for _, line := range row.Lines {
-					fmt.Println(line)
+
+				if row.Curr != "" {
+					fmt.Println(row.Curr)
 				}
+
+				if row.Prev != "" {
+					fmt.Println(row.Prev)
+				}
+
 				found = true
 				break
 			}
 		}
+
 		if !found {
-			if ctxLineEndIdx > len(text2) {
-				fmt.Println(text1[j])
+
+			if contextChangeEndIdx > len(d.revisedText) {
+				fmt.Println(d.sourceText[j])
+
 			} else {
-				fmt.Println(text2[j])
+				fmt.Println(d.revisedText[j])
 			}
 		}
 	}
 }
 
-func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, inserted map[int]int, changesTracker []int, depth int) {
+func (d *DiffChecker) start() {
 	var changeStartIdx int
 	var changeEndIdx int
 	var nextChangeIdx int
@@ -206,28 +233,23 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 	var ctxLineStartIdx int
 	var ctxLineEndIdx int
 
-	if len(inserted) == 0 && len(removed) == 0 {
+	d.lcs(d.sourceText, d.revisedText)
+	d.GenerateDiff()
+
+	if len(d.inserted) == 0 && len(d.removed) == 0 {
 		return
 	}
 
 	for {
 
-		if len(changesTracker) == 0 {
+		if len(d.changesTracker) == 0 {
 			break
 		}
 
 		for {
 
-			changeStartIdx, changeEndIdx, nextChangeIdx = calculateConsecutiveChanges(changesTracker)
-
-			ctxLineStartIdx, ctxLineEndIdx = calculateContextLines(
-				changeStartIdx,
-				changeEndIdx,
-				text1,
-				text2,
-				depth,
-			)
-
+			changeStartIdx, changeEndIdx, nextChangeIdx = d.calculateConsecutiveChanges()
+			ctxLineStartIdx, ctxLineEndIdx = d.calculateContextLines(changeStartIdx, changeEndIdx)
 			ctxLinesCache = append(ctxLinesCache, ctxLineStartIdx)
 			ctxLinesCache = append(ctxLinesCache, ctxLineEndIdx)
 
@@ -241,17 +263,16 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 			if len(ctxLinesCache) > 2 && !overlap(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1]) {
 				ctxLinesCache = ctxLinesCache[:2]
 				break
-
 			}
 
-			changesTracker = changesTracker[nextChangeIdx:]
+			d.changesTracker = d.changesTracker[nextChangeIdx:]
 
-			if len(changesTracker) == 1 && nextChangeIdx == 0 {
-				changesTracker = changesTracker[:0]
+			if len(d.changesTracker) == 1 && nextChangeIdx == 0 {
+				d.changesTracker = d.changesTracker[:0]
 				break
 			}
 
-			if len(changesTracker) == 0 {
+			if len(d.changesTracker) == 0 {
 				break
 			}
 
@@ -262,13 +283,7 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 			ctxLineStartIdx = ctxLinesCache[i]
 			ctxLineEndIdx = ctxLinesCache[i+1]
 
-			displayDiffWithCtxLines(ctxLineStartIdx,
-				ctxLineEndIdx,
-				diff,
-				text1,
-				text2,
-				&ctxLinesCache,
-			)
+			d.printDiffWithContext(ctxLineStartIdx, ctxLineEndIdx, &ctxLinesCache)
 		}
 
 		ctxLinesCache = ctxLinesCache[:0]
@@ -279,9 +294,11 @@ func PrintDifff(diff []DiffItem, text1, text2 []string, removed map[int]int, ins
 
 func readFile(filename string) []string {
 	file, err := os.Open(filename)
+
 	if err != nil {
 		fmt.Println(err)
 	}
+
 	defer file.Close()
 
 	var lines []string
