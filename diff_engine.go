@@ -55,6 +55,7 @@ func (d *DiffChecker) lcs(s1, s2 []string) {
 			if s1[i-1] == s2[j-1] {
 				cur[j] = prev[j-1] + 1
 			}
+
 			if s1[i-1] != s2[j-1] {
 				cur[j] = max(cur[j-1], prev[j])
 			}
@@ -182,14 +183,6 @@ func (d *DiffChecker) calculateContextLines(changeStartIdx int, changeEndIdx int
 
 }
 
-func overlap(a1, a2, b1, b2 int) bool {
-	return a1 <= b2 && b1 <= a2
-}
-
-func mergeIndices(a1, a2, b1, b2 int) (int, int) {
-	return min(a1, b1), max(a2, b2)
-}
-
 func (d *DiffChecker) printDiffWithContext(contextChangeStartIdx int, contextChangeEndIdx int, ctxLinesCache *[]int) {
 
 	for j := contextChangeStartIdx; j <= contextChangeEndIdx; j++ {
@@ -307,4 +300,12 @@ func readFile(filename string) []string {
 		lines = append(lines, scanner.Text())
 	}
 	return lines
+}
+
+func overlap(a1, a2, b1, b2 int) bool {
+	return a1 <= b2 && b1 <= a2
+}
+
+func mergeIndices(a1, a2, b1, b2 int) (int, int) {
+	return min(a1, b1), max(a2, b2)
 }
