@@ -12,6 +12,11 @@ const (
 	RESET = "\033[0m"
 )
 
+type Cache struct {
+	startIdx int
+	endIdx   int
+}
+
 type Change struct {
 	Idx  int
 	Prev string
@@ -108,6 +113,11 @@ func (d *DiffChecker) GenerateDiff() {
 		}
 
 		if _, exists := d.removed[sourceTextIdx]; exists {
+			
+			if _, exists := d.inserted[revisedTextIdx]; !exists{
+				change.Curr = ""
+			}
+
 			change.Idx = sourceTextIdx
 			change.Prev = fmt.Sprintf("%s- %s %s", RED, string(d.sourceText[sourceTextIdx]), RESET)
 			d.changesTracker = append(d.changesTracker, sourceTextIdx)
@@ -115,6 +125,11 @@ func (d *DiffChecker) GenerateDiff() {
 		}
 
 		if _, exists := d.inserted[revisedTextIdx]; exists {
+
+			if _, exists := d.removed[revisedTextIdx]; !exists{
+				change.Prev = ""
+			}
+
 			change.Idx = revisedTextIdx
 			change.Curr = fmt.Sprintf("%s+ %s %s", GREEN, string(d.revisedText[revisedTextIdx]), RESET)
 
@@ -171,11 +186,11 @@ func (d *DiffChecker) calculateContextLines(changeStartIdx int, changeEndIdx int
 		contextChangeStartIdx = 0
 	}
 
-	if contextChangeEndIdx > len(d.revisedText) && changeEndIdx < len(d.revisedText) {
+	if contextChangeEndIdx > len(d.revisedText)-1 && changeEndIdx < len(d.revisedText) {
 		contextChangeEndIdx = len(d.revisedText) - 1
 	}
 
-	if contextChangeEndIdx > len(d.revisedText) && changeEndIdx > len(d.revisedText) {
+	if contextChangeEndIdx > len(d.revisedText)-1 && changeEndIdx > len(d.revisedText) {
 		contextChangeEndIdx = len(d.sourceText) - 1
 	}
 
@@ -184,9 +199,10 @@ func (d *DiffChecker) calculateContextLines(changeStartIdx int, changeEndIdx int
 }
 
 func (d *DiffChecker) printDiffWithContext(contextChangeStartIdx int, contextChangeEndIdx int, ctxLinesCache *[]int) {
+	var found bool
 
 	for j := contextChangeStartIdx; j <= contextChangeEndIdx; j++ {
-		found := false
+		found = false
 		for _, row := range d.diff {
 
 			if row.Idx == j {
@@ -213,6 +229,7 @@ func (d *DiffChecker) printDiffWithContext(contextChangeStartIdx int, contextCha
 				fmt.Println(d.revisedText[j])
 			}
 		}
+
 	}
 }
 
@@ -225,10 +242,13 @@ func (d *DiffChecker) start() {
 	var overlapEndIdx int
 	var ctxLineStartIdx int
 	var ctxLineEndIdx int
+	Cache := newCache()
+	firstIteration := true
 
 	d.lcs(d.sourceText, d.revisedText)
 	d.GenerateDiff()
-
+	changesTracker := d.changesTracker
+	fmt.Println("ChangesTracker: ", changesTracker)
 	if len(d.inserted) == 0 && len(d.removed) == 0 {
 		return
 	}
@@ -243,25 +263,35 @@ func (d *DiffChecker) start() {
 
 			changeStartIdx, changeEndIdx, nextChangeIdx = d.calculateConsecutiveChanges()
 			ctxLineStartIdx, ctxLineEndIdx = d.calculateContextLines(changeStartIdx, changeEndIdx)
-			ctxLinesCache = append(ctxLinesCache, ctxLineStartIdx)
-			ctxLinesCache = append(ctxLinesCache, ctxLineEndIdx)
 
-			if len(ctxLinesCache) > 2 && overlap(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1]) {
-				overlapStartIdx, overlapEndIdx = mergeIndices(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1])
-				ctxLinesCache = append(ctxLinesCache, overlapStartIdx)
-				ctxLinesCache = append(ctxLinesCache, overlapEndIdx)
-				ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
+			if !firstIteration && overlap(ctxLineStartIdx, ctxLineEndIdx, Cache.startIdx, Cache.endIdx) {
+				overlapStartIdx, overlapEndIdx = mergeIndices(ctxLineStartIdx, ctxLineEndIdx, Cache.startIdx, Cache.startIdx)
+				// ctxLinesCache = append(ctxLinesCache, overlapStartIdx)
+				// ctxLinesCache = append(ctxLinesCache, overlapEndIdx)
+				// ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
+				Cache.startIdx = overlapStartIdx
+				Cache.endIdx = overlapEndIdx
 			}
 
-			if len(ctxLinesCache) > 2 && !overlap(ctxLineStartIdx, ctxLineEndIdx, ctxLinesCache[0], ctxLinesCache[1]) {
-				ctxLinesCache = ctxLinesCache[:2]
+			if !firstIteration && !overlap(ctxLineStartIdx, ctxLineEndIdx, Cache.startIdx, Cache.endIdx) {
+				//ctxLinesCache = ctxLinesCache[:2]
+				Cache.startIdx = ctxLineStartIdx
+				Cache.endIdx = ctxLineEndIdx
 				break
 			}
 
 			d.changesTracker = d.changesTracker[nextChangeIdx:]
 
+			if firstIteration {
+				Cache.startIdx = ctxLineStartIdx
+				Cache.endIdx = ctxLineEndIdx
+				firstIteration = false
+			}
+
 			if len(d.changesTracker) == 1 && nextChangeIdx == 0 {
 				d.changesTracker = d.changesTracker[:0]
+				// Cache.startIdx = ctxLineStartIdx
+				// Cache.endIdx = ctxLineEndIdx
 				break
 			}
 
@@ -271,15 +301,12 @@ func (d *DiffChecker) start() {
 
 		}
 
-		for i := 0; i < len(ctxLinesCache); i += 2 {
+		ctxLineStartIdx = Cache.startIdx
+		ctxLineEndIdx = Cache.endIdx
 
-			ctxLineStartIdx = ctxLinesCache[i]
-			ctxLineEndIdx = ctxLinesCache[i+1]
+		d.printDiffWithContext(ctxLineStartIdx, ctxLineEndIdx, &ctxLinesCache)
 
-			d.printDiffWithContext(ctxLineStartIdx, ctxLineEndIdx, &ctxLinesCache)
-		}
-
-		ctxLinesCache = ctxLinesCache[:0]
+		firstIteration = true
 
 	}
 
@@ -300,6 +327,13 @@ func readFile(filename string) []string {
 		lines = append(lines, scanner.Text())
 	}
 	return lines
+}
+
+func newCache() *Cache {
+	return &Cache{
+		startIdx: 0,
+		endIdx:   0,
+	}
 }
 
 func overlap(a1, a2, b1, b2 int) bool {
