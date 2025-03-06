@@ -304,9 +304,7 @@ func (d *DiffChecker) start() {
 
 		}
 
-		ctxStart = Cache.startIdx
-		ctxEnd = Cache.endIdx
-		d.printDiffWithContext(ctxStart, ctxEnd)
+		d.printDiffWithContext(Cache.startIdx,Cache.endIdx)
 		FirstIteration = true
 
 	}
