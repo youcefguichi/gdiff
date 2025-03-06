@@ -10,6 +10,8 @@ const (
 	GREEN = "\033[32m"
 	RED   = "\033[31m"
 	RESET = "\033[0m"
+	MINUS = "- "
+	PLUS  = "+ "
 )
 
 type Cache struct {
@@ -113,25 +115,25 @@ func (d *DiffChecker) GenerateDiff() {
 		}
 
 		if _, exists := d.removed[sourceTextIdx]; exists {
-			
-			if _, exists := d.inserted[revisedTextIdx]; !exists{
+
+			if _, exists := d.inserted[revisedTextIdx]; !exists {
 				change.Curr = ""
 			}
 
 			change.Idx = sourceTextIdx
-			change.Prev = fmt.Sprintf("%s- %s %s", RED, string(d.sourceText[sourceTextIdx]), RESET)
+			change.Prev = RED + MINUS + string(d.sourceText[sourceTextIdx]) + RESET
 			d.changesTracker = append(d.changesTracker, sourceTextIdx)
 			trackerIndex++
 		}
 
 		if _, exists := d.inserted[revisedTextIdx]; exists {
 
-			if _, exists := d.removed[revisedTextIdx]; !exists{
+			if _, exists := d.removed[revisedTextIdx]; !exists {
 				change.Prev = ""
 			}
 
 			change.Idx = revisedTextIdx
-			change.Curr = fmt.Sprintf("%s+ %s %s", GREEN, string(d.revisedText[revisedTextIdx]), RESET)
+			change.Curr = GREEN + PLUS + string(d.revisedText[revisedTextIdx]) + RESET
 
 			if trackerIndex > 0 && d.changesTracker[trackerIndex-1] != revisedTextIdx {
 				d.changesTracker = append(d.changesTracker, revisedTextIdx)
