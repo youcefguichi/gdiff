@@ -180,30 +180,32 @@ func (d *DiffChecker) calculateConsecutiveChanges() (int, int, int) {
 }
 
 func (d *DiffChecker) calculateContextLines(changeStartIdx int, changeEndIdx int) (int, int) {
+	var ctxStart int
+	var ctxEnd int
 
-	contextChangeStartIdx := changeStartIdx - d.depth
-	contextChangeEndIdx := changeEndIdx + d.depth
+	ctxStart = changeStartIdx - d.depth
+	ctxEnd = changeEndIdx + d.depth
 
-	if contextChangeStartIdx < 0 {
-		contextChangeStartIdx = 0
+	if ctxStart < 0 {
+		ctxStart = 0
 	}
 
-	if contextChangeEndIdx > len(d.revisedText)-1 && changeEndIdx < len(d.revisedText) {
-		contextChangeEndIdx = len(d.revisedText) - 1
+	if ctxEnd > len(d.revisedText)-1 && changeEndIdx < len(d.revisedText) {
+		ctxEnd = len(d.revisedText) - 1
 	}
 
-	if contextChangeEndIdx > len(d.revisedText)-1 && changeEndIdx > len(d.revisedText) {
-		contextChangeEndIdx = len(d.sourceText) - 1
+	if ctxEnd > len(d.revisedText)-1 && changeEndIdx > len(d.revisedText) {
+		ctxEnd = len(d.sourceText) - 1
 	}
 
-	return contextChangeStartIdx, contextChangeEndIdx
+	return ctxStart, ctxEnd
 
 }
 
-func (d *DiffChecker) printDiffWithContext(contextChangeStartIdx int, contextChangeEndIdx int, ctxLinesCache *[]int) {
+func (d *DiffChecker) printDiffWithContext(ctxStart int, ctxEnd int) {
 	var found bool
 
-	for j := contextChangeStartIdx; j <= contextChangeEndIdx; j++ {
+	for j := ctxStart; j <= ctxEnd; j++ {
 		found = false
 		for _, row := range d.diff {
 
@@ -224,7 +226,7 @@ func (d *DiffChecker) printDiffWithContext(contextChangeStartIdx int, contextCha
 
 		if !found {
 
-			if contextChangeEndIdx > len(d.revisedText) {
+			if ctxEnd > len(d.revisedText) {
 				fmt.Println(d.sourceText[j])
 
 			} else {
@@ -239,18 +241,16 @@ func (d *DiffChecker) start() {
 	var changeStartIdx int
 	var changeEndIdx int
 	var nextChangeIdx int
-	var ctxLinesCache []int
 	var overlapStartIdx int
 	var overlapEndIdx int
-	var ctxLineStartIdx int
-	var ctxLineEndIdx int
-	Cache := newCache()
-	firstIteration := true
+	var ctxStart int
+	var ctxEnd int
+	var isFirstPass bool // default is false
 
+	Cache := newCache()
 	d.lcs(d.sourceText, d.revisedText)
 	d.GenerateDiff()
-	changesTracker := d.changesTracker
-	fmt.Println("ChangesTracker: ", changesTracker)
+
 	if len(d.inserted) == 0 && len(d.removed) == 0 {
 		return
 	}
@@ -264,30 +264,30 @@ func (d *DiffChecker) start() {
 		for {
 
 			changeStartIdx, changeEndIdx, nextChangeIdx = d.calculateConsecutiveChanges()
-			ctxLineStartIdx, ctxLineEndIdx = d.calculateContextLines(changeStartIdx, changeEndIdx)
+			ctxStart, ctxEnd = d.calculateContextLines(changeStartIdx, changeEndIdx)
 
-			if !firstIteration && overlap(ctxLineStartIdx, ctxLineEndIdx, Cache.startIdx, Cache.endIdx) {
+			if !isFirstPass && overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
 
-				overlapStartIdx, overlapEndIdx = mergeIndices(ctxLineStartIdx, ctxLineEndIdx, Cache.startIdx, Cache.startIdx)
+				overlapStartIdx, overlapEndIdx = mergeIndices(ctxStart, ctxEnd, Cache.startIdx, Cache.startIdx)
 
 				Cache.startIdx = overlapStartIdx
 				Cache.endIdx = overlapEndIdx
 			}
 
-			if !firstIteration && !overlap(ctxLineStartIdx, ctxLineEndIdx, Cache.startIdx, Cache.endIdx) {
+			if !isFirstPass && !overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
 
-				Cache.startIdx = ctxLineStartIdx
-				Cache.endIdx = ctxLineEndIdx
+				Cache.startIdx = ctxStart
+				Cache.endIdx = ctxEnd
 				break
 			}
 
 			d.changesTracker = d.changesTracker[nextChangeIdx:]
 
-			if firstIteration {
+			if isFirstPass {
 
-				Cache.startIdx = ctxLineStartIdx
-				Cache.endIdx = ctxLineEndIdx
-				firstIteration = false
+				Cache.startIdx = ctxStart
+				Cache.endIdx = ctxEnd
+				isFirstPass = false
 			}
 
 			if len(d.changesTracker) == 1 && nextChangeIdx == 0 {
@@ -302,12 +302,10 @@ func (d *DiffChecker) start() {
 
 		}
 
-		ctxLineStartIdx = Cache.startIdx
-		ctxLineEndIdx = Cache.endIdx
-
-		d.printDiffWithContext(ctxLineStartIdx, ctxLineEndIdx, &ctxLinesCache)
-
-		firstIteration = true
+		ctxStart = Cache.startIdx
+		ctxEnd = Cache.endIdx
+		d.printDiffWithContext(ctxStart, ctxEnd)
+		isFirstPass = true
 
 	}
 
