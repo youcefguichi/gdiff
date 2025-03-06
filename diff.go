@@ -267,16 +267,15 @@ func (d *DiffChecker) start() {
 			ctxLineStartIdx, ctxLineEndIdx = d.calculateContextLines(changeStartIdx, changeEndIdx)
 
 			if !firstIteration && overlap(ctxLineStartIdx, ctxLineEndIdx, Cache.startIdx, Cache.endIdx) {
+
 				overlapStartIdx, overlapEndIdx = mergeIndices(ctxLineStartIdx, ctxLineEndIdx, Cache.startIdx, Cache.startIdx)
-				// ctxLinesCache = append(ctxLinesCache, overlapStartIdx)
-				// ctxLinesCache = append(ctxLinesCache, overlapEndIdx)
-				// ctxLinesCache = ctxLinesCache[len(ctxLinesCache)-2:]
+
 				Cache.startIdx = overlapStartIdx
 				Cache.endIdx = overlapEndIdx
 			}
 
 			if !firstIteration && !overlap(ctxLineStartIdx, ctxLineEndIdx, Cache.startIdx, Cache.endIdx) {
-				//ctxLinesCache = ctxLinesCache[:2]
+
 				Cache.startIdx = ctxLineStartIdx
 				Cache.endIdx = ctxLineEndIdx
 				break
@@ -285,15 +284,15 @@ func (d *DiffChecker) start() {
 			d.changesTracker = d.changesTracker[nextChangeIdx:]
 
 			if firstIteration {
+
 				Cache.startIdx = ctxLineStartIdx
 				Cache.endIdx = ctxLineEndIdx
 				firstIteration = false
 			}
 
 			if len(d.changesTracker) == 1 && nextChangeIdx == 0 {
+
 				d.changesTracker = d.changesTracker[:0]
-				// Cache.startIdx = ctxLineStartIdx
-				// Cache.endIdx = ctxLineEndIdx
 				break
 			}
 
