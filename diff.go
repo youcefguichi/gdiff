@@ -245,7 +245,7 @@ func (d *DiffChecker) start() {
 	var overlapEndIdx int
 	var ctxStart int
 	var ctxEnd int
-	var isFirstPass bool // default is false
+	var FirstIteration bool // default is false
 
 	Cache := newCache()
 	d.lcs(d.sourceText, d.revisedText)
@@ -266,7 +266,7 @@ func (d *DiffChecker) start() {
 			changeStartIdx, changeEndIdx, nextChangeIdx = d.calculateConsecutiveChanges()
 			ctxStart, ctxEnd = d.calculateContextLines(changeStartIdx, changeEndIdx)
 
-			if !isFirstPass && overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
+			if !FirstIteration && overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
 
 				overlapStartIdx, overlapEndIdx = mergeIndices(ctxStart, ctxEnd, Cache.startIdx, Cache.startIdx)
 
@@ -274,7 +274,7 @@ func (d *DiffChecker) start() {
 				Cache.endIdx = overlapEndIdx
 			}
 
-			if !isFirstPass && !overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
+			if !FirstIteration && !overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
 
 				Cache.startIdx = ctxStart
 				Cache.endIdx = ctxEnd
@@ -283,11 +283,11 @@ func (d *DiffChecker) start() {
 
 			d.changesTracker = d.changesTracker[nextChangeIdx:]
 
-			if isFirstPass {
+			if FirstIteration {
 
 				Cache.startIdx = ctxStart
 				Cache.endIdx = ctxEnd
-				isFirstPass = false
+				FirstIteration = false
 			}
 
 			if len(d.changesTracker) == 1 && nextChangeIdx == 0 {
@@ -305,7 +305,7 @@ func (d *DiffChecker) start() {
 		ctxStart = Cache.startIdx
 		ctxEnd = Cache.endIdx
 		d.printDiffWithContext(ctxStart, ctxEnd)
-		isFirstPass = true
+		FirstIteration = true
 
 	}
 
