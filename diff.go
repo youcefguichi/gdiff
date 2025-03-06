@@ -245,8 +245,10 @@ func (d *DiffChecker) start() {
 	var overlapEndIdx int
 	var ctxStart int
 	var ctxEnd int
-	var FirstIteration bool // default is false
-
+	
+	
+	
+	FirstIteration := true
 	Cache := newCache()
 	d.lcs(d.sourceText, d.revisedText)
 	d.GenerateDiff()
