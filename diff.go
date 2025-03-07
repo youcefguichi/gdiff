@@ -245,9 +245,7 @@ func (d *DiffChecker) start() {
 	var overlapEndIdx int
 	var ctxStart int
 	var ctxEnd int
-	
-	
-	
+
 	FirstIteration := true
 	Cache := newCache()
 	d.lcs(d.sourceText, d.revisedText)
@@ -304,14 +302,15 @@ func (d *DiffChecker) start() {
 
 		}
 
-		d.printDiffWithContext(Cache.startIdx,Cache.endIdx)
+		d.printDiffWithContext(Cache.startIdx, Cache.endIdx)
 		FirstIteration = true
+		fmt.Println(FirstIteration)
 
 	}
 
 }
 
-func readFile(filename string) []string {
+func loadFile(filename string) []string {
 	file, err := os.Open(filename)
 
 	if err != nil {
