@@ -77,11 +77,21 @@ func TestGenerateDiff(t *testing.T) {
 			expected:    []Change{},
 		},
 		{
-			name:        "Modification",
+			name:        "Single Modification",
 			sourceFile:  []string{"line 1", "line 2", "line 3", "line 4", "line 5"},
 			revisedFile: []string{"line 2", "line 2", "line 3", "line 4", "line 5"},
 			depth:       0,
 			expected:    []Change{{0, RED + MINUS + "line 1" + RESET, GREEN + PLUS + "line 2" + RESET}},
+		},
+		{
+			name:        "Multiple Modifications",
+			sourceFile:  []string{"line 1", "line 2", "line 3", "line 4", "line 5"},
+			revisedFile: []string{"line 2", "line 34", "line 3", "line 4", "line 5"},
+			depth:       0,
+			expected:    []Change{
+				{0, RED + MINUS + "line 1" + RESET, GREEN + PLUS + "line 2" + RESET},
+				{1, RED + MINUS + "line 2" + RESET, GREEN + PLUS + "line 34" + RESET},
+			},
 		},
 		{
 			name:        "Insertion",
