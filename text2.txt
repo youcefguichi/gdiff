@@ -1,12 +1,5 @@
-0. Line 1
-1. Line 
-3. Line 
-2. Line 4
-3. Line 
-4. Line 6]
-5. Line 7
-6. Line 
-7. Line 9
-rtrrt
-rtrrt
-tr
+line 2
+line 2
+line 3
+line 4
+line 5

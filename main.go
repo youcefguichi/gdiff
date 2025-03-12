@@ -1,25 +1,13 @@
 package main
 
-import (
-	"flag"
-	"fmt"
-)
+import "fmt"
 
 func main() {
-	sourceText := flag.String("source-text", "", "Path to the source text file")
-	revisedText := flag.String("revised-text", "", "Path to the revised text file")
-	contextSize := flag.Int("context-size", 3, "Number of context lines")
-
-	flag.Parse()
-
-	if *sourceText == "" || *revisedText == "" {
-		fmt.Println("Both --source-text and --revised-text flags are required")
-		return
-	}
-
-	sourceFile := loadFile(*sourceText)
-	revisedFile := loadFile(*revisedText)
-
-	ndc := NewDiffChecker(sourceFile, revisedFile, *contextSize)
-	ndc.start()
+	sourceFile := []string{"line 1", "line 2", "line 3", "line 4", "line 5"}
+	revisedFile := []string{"line 2", "line 2", "line 3", "line 4", "line 5"}
+	ndc := NewDiffChecker(sourceFile, revisedFile, 0)
+	ndc.lcs(sourceFile, revisedFile)
+	ndc.GenerateDiff()
+	fmt.Println(ndc.diff)
+	// ndc.start()
 }

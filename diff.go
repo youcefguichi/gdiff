@@ -110,6 +110,8 @@ func (d *DiffChecker) GenerateDiff() {
 
 	for {
 
+		change = Change{}
+
 		if sourceTextIdx > len(d.sourceText)-1 && revisedTextIdx > len(d.revisedText)-1 {
 			break
 		}
@@ -143,6 +145,7 @@ func (d *DiffChecker) GenerateDiff() {
 			if len(d.changesTracker) == 0 && len(d.removed) == 0 {
 				d.changesTracker = append(d.changesTracker, revisedTextIdx)
 			}
+
 		}
 
 		if change.Prev != "" || change.Curr != "" {
@@ -275,13 +278,13 @@ func (d *DiffChecker) start() {
 			}
 
 			if !FirstIteration && !overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
-
+				d.printDiffWithContext(Cache.startIdx, Cache.endIdx)
 				Cache.startIdx = ctxStart
 				Cache.endIdx = ctxEnd
 				break
 			}
 
-			d.changesTracker = d.changesTracker[nextChangeIdx:]
+			//d.changesTracker = d.changesTracker[nextChangeIdx:]
 
 			if FirstIteration {
 
@@ -289,6 +292,8 @@ func (d *DiffChecker) start() {
 				Cache.endIdx = ctxEnd
 				FirstIteration = false
 			}
+
+			d.changesTracker = d.changesTracker[nextChangeIdx:]
 
 			if len(d.changesTracker) == 1 && nextChangeIdx == 0 {
 
