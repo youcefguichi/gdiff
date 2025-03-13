@@ -159,19 +159,23 @@ func (d *DiffChecker) GenerateDiff() {
 
 func (d *DiffChecker) calculateConsecutiveChanges() (int, int, int) {
 
-	changeStartIdx := d.changesTracker[0]
-	changeEndIdx := d.changesTracker[0]
-	count := 1
+	if len(d.changesTracker) == 0 {
+		return 0, 0, 0
+	}
 
 	if len(d.changesTracker) == 1 {
-		return changeStartIdx, changeEndIdx, 0
+		return d.changesTracker[0], d.changesTracker[0], 0
 	}
+
+	changeStartIdx := d.changesTracker[0]
+	changeEndIdx := d.changesTracker[0]
+	nextChangeStartIdx := 1
 
 	for i, val := range d.changesTracker[:len(d.changesTracker)-1] {
 
 		if val+1 == d.changesTracker[i+1] {
 			changeEndIdx++
-			count++
+			nextChangeStartIdx++
 
 		} else {
 			break
@@ -179,7 +183,7 @@ func (d *DiffChecker) calculateConsecutiveChanges() (int, int, int) {
 
 	}
 
-	return changeStartIdx, changeEndIdx, count
+	return changeStartIdx, changeEndIdx, nextChangeStartIdx
 }
 
 func (d *DiffChecker) calculateContextLines(changeStartIdx int, changeEndIdx int) (int, int) {
