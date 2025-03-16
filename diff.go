@@ -26,24 +26,28 @@ type Change struct {
 }
 
 type DiffChecker struct {
-	sourceText     []string
-	revisedText    []string
-	removed        map[int]int
-	inserted       map[int]int
-	changesTracker []int
-	diff           []Change
-	depth          int
+	sourceText      []string
+	revisedText     []string
+	sourceTextSize  int
+	revisedTextSize int
+	removed         map[int]int
+	inserted        map[int]int
+	changesTracker  []int
+	diff            []Change
+	depth           int
 }
 
 func NewDiffChecker(sourceText, revisedText []string, depth int) *DiffChecker {
 	return &DiffChecker{
-		sourceText:     sourceText,
-		revisedText:    revisedText,
-		depth:          depth,
-		removed:        make(map[int]int),
-		inserted:       make(map[int]int),
-		changesTracker: make([]int, 0),
-		diff:           make([]Change, 0),
+		sourceText:      sourceText,
+		revisedText:     revisedText,
+		sourceTextSize:  len(sourceText),
+		revisedTextSize: len(revisedText),
+		depth:           depth,
+		removed:         make(map[int]int),
+		inserted:        make(map[int]int),
+		changesTracker:  make([]int, 0),
+		diff:            make([]Change, 0),
 	}
 }
 
@@ -197,11 +201,11 @@ func (d *DiffChecker) calculateContextLines(changeStartIdx int, changeEndIdx int
 		ctxStart = 0
 	}
 
-	if ctxEnd > len(d.revisedText)-1 && changeEndIdx < len(d.revisedText) {
-		ctxEnd = len(d.revisedText) - 1
+	if ctxEnd > d.revisedTextSize-1 && changeEndIdx < d.revisedTextSize {
+		ctxEnd = d.revisedTextSize - 1
 	}
 
-	if ctxEnd > len(d.revisedText)-1 && changeEndIdx > len(d.revisedText) {
+	if ctxEnd > d.revisedTextSize-1 && changeEndIdx > d.revisedTextSize {
 		ctxEnd = len(d.sourceText) - 1
 	}
 

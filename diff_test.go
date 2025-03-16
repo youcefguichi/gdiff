@@ -199,3 +199,72 @@ func TestCalcualteConsecutiveChanges(t *testing.T) {
 		})
 	}
 }
+
+func TestCalculateContextLines(t *testing.T) {
+	tests := []struct {
+		name            string
+		changeStartIdx  int
+		changeEndIdx    int
+		depth           int
+		revisedTextSize int
+		sourceTextSize  int
+
+		// expected output
+		ctxStart int
+		ctxEnd   int
+	}{
+		{
+			name:            "ctx end > revisedTextSize && ctx start < 0",
+			changeStartIdx:  0,
+			changeEndIdx:    0,
+			depth:           7,
+			revisedTextSize: 5,
+			sourceTextSize:  5,
+
+			// expected output
+			ctxStart: 0,
+			ctxEnd:   4,
+		},
+		{
+			name:            "Change within the text size range",
+			changeStartIdx:  2,
+			changeEndIdx:    4,
+			depth:           2,
+			revisedTextSize: 10,
+			sourceTextSize:  10,
+
+			// expected output
+			ctxStart: 0,
+			ctxEnd:   6,
+		},
+		{
+			name:            "Behaviour on reduced revised text size",
+			changeStartIdx:  2,
+			changeEndIdx:    4,
+			depth:           10,
+			revisedTextSize: 7,
+			sourceTextSize:  10,
+
+			// expected output
+			ctxStart: 0,
+			ctxEnd:   6,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ndc := NewDiffChecker([]string{}, []string{}, test.depth)
+			ndc.revisedTextSize = test.revisedTextSize
+			ndc.sourceTextSize = test.sourceTextSize
+			ctxStart, ctxEnd := ndc.calculateContextLines(test.changeStartIdx, test.changeEndIdx)
+
+			if !reflect.DeepEqual(ctxStart, test.ctxStart) {
+				t.Errorf("calculateContextLines() expected ctxStart: %v, got: %v", test.ctxStart, ctxStart)
+			}
+
+			if !reflect.DeepEqual(ctxEnd, test.ctxEnd) {
+				t.Errorf("calculateContextLines() expected ctxEnd: %v, got: %v", test.ctxEnd, ctxEnd)
+			}
+		})
+	}
+}
