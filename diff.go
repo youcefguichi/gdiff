@@ -30,6 +30,7 @@ type DiffChecker struct {
 	revisedText     []string
 	sourceTextSize  int
 	revisedTextSize int
+	lcsOutput       []string
 	removed         map[int]int
 	inserted        map[int]int
 	changesTracker  []int
@@ -56,7 +57,6 @@ func (d *DiffChecker) lcs(s1, s2 []string) {
 	n := len(s2)
 	cur := make([]int, n+1)
 	prev := make([]int, n+1)
-	var lcs []string
 
 	// Calculate lcs
 	for i := 1; i < m+1; i++ {
@@ -78,7 +78,7 @@ func (d *DiffChecker) lcs(s1, s2 []string) {
 	j := n
 	for i > 0 && j > 0 {
 		if s1[i-1] == s2[j-1] {
-			lcs = append(lcs, s1[i-1])
+			d.lcsOutput = append(d.lcsOutput, s1[i-1])
 			i--
 			j--
 		} else if prev[j] == prev[j-1] {
@@ -100,6 +100,7 @@ func (d *DiffChecker) lcs(s1, s2 []string) {
 		j--
 	}
 
+	d.lcsOutput = reverseSlice(d.lcsOutput)
 }
 
 func (d *DiffChecker) GenerateDiff() {
@@ -353,4 +354,12 @@ func overlap(a1, a2, b1, b2 int) bool {
 
 func mergeIndices(a1, a2, b1, b2 int) (int, int) {
 	return min(a1, b1), max(a2, b2)
+}
+
+func reverseSlice(data []string) []string {
+	for i := 0; i < len(data)/2; i++ {
+		j := len(data) - 1 - i
+		data[i], data[j] = data[j], data[i]
+	}
+	return data
 }

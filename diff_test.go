@@ -6,60 +6,78 @@ import (
 	"testing"
 )
 
-// func TestLcs(t *testing.T) {
+func TestLCS(t *testing.T) {
+	tests := []struct {
+		name        string
+		sourceText  []string
+		revisedText []string
 
-// 	tests := []struct {
-// 		s1       string
-// 		s2       string
-// 		lcs      string
-// 		removed  string
-// 		inserted string
-// 	}{
-// 		{"ABCDEF", "ABCDEF", "ABCDEF", "", ""},
-// 		{"ABC", "XYZ", "", "ABC", "XYZ"},
-// 		{"AABCXY", "XYZ", "XY", "AABC", "Z"},
-// 		{"", "", "", "", ""},
-// 		{"ABCD", "AC", "AC", "BD", ""},
-// 	}
+		// expected
+		lcs      []string
+		inserted map[int]int
+		removed  map[int]int
+	}{
+		{
+			name:        "Identical strings",
+			sourceText:  []string{"A", "B", "C", "D", "E", "F"},
+			revisedText: []string{"A", "B", "C", "D", "E", "F"},
+			lcs:         []string{"A", "B", "C", "D", "E", "F"},
+			inserted:    map[int]int{},
+			removed:     map[int]int{},
+		},
+		{
+			name:        "Completely different strings",
+			sourceText:  []string{"A", "B", "C"},
+			revisedText: []string{"X", "Y", "Z"},
+			lcs:         []string{},
+			inserted:    map[int]int{0: 1, 1: 1, 2: 1},
+			removed:     map[int]int{0: 1, 1: 1, 2: 1},
+		},
+		{
+			name:        "Partial overlap",
+			sourceText:  []string{"A", "A", "B", "C", "X", "Y"},
+			revisedText: []string{"X", "Y", "Z"},
+			lcs:         []string{"X", "Y"},
+			inserted:    map[int]int{2: 1},
+			removed:     map[int]int{0: 1, 1: 1, 2: 1, 3: 1},
+		},
+		{
+			name:        "Empty strings",
+			sourceText:  []string{},
+			revisedText: []string{},
+			lcs:         []string{},
+			inserted:    map[int]int{},
+			removed:     map[int]int{},
+		},
+		{
+			name:        "Partial match with deletions",
+			sourceText:  []string{"A", "B", "C", "D"},
+			revisedText: []string{"A", "C"},
+			lcs:         []string{"A", "C"},
+			inserted:    map[int]int{},
+			removed:     map[int]int{1: 1, 3: 1},
+		},
+	}
 
-// 	for _, test := range tests {
-// 		lcs, removed, inserted := lcs(test.s1, test.s2)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ndc := NewDiffChecker(test.sourceText, test.revisedText, 0)
+			ndc.lcs(test.sourceText, test.revisedText)
 
-// 		if !reflect.DeepEqual(lcs, test.lcs) {
-// 			t.Errorf("lcs(%s, %s): expected '%s', got '%s'", test.s1, test.s2, test.lcs, lcs)
-// 		}
+			if !reflect.DeepEqual(ndc.lcsOutput, test.lcs) {
+				t.Errorf("lcs(%s, %s) expected  lcs: %v  got lcs: %v", test.sourceText, test.revisedText, test.lcs, ndc.lcsOutput)
+			}
 
-// 		if !reflect.DeepEqual(removed, test.removed) {
-// 			t.Errorf("lcs(%s, %s): expected to remove '%s' instead of '%s'", test.s1, test.s2, test.removed, removed)
-// 		}
+			if !reflect.DeepEqual(ndc.inserted, test.inserted) {
+				t.Errorf("lcs(%s, %s) \n expected  inserted: %v \n got %v", test.sourceText, test.revisedText, test.inserted, ndc.inserted)
+			}
 
-// 		if !reflect.DeepEqual(inserted, test.inserted) {
-// 			t.Errorf("lcs(%s, %s): expected to insert '%s' instead of '%s'", test.s1, test.s2, test.inserted, inserted)
-// 		}
-// 	}
-
-// }
-
-// func TestReverseSlice(t *testing.T) {
-
-// 	tests := []struct {
-// 		input    []byte
-// 		expected []byte
-// 	}{
-// 		{[]byte("ABCDEF"), []byte("FEDCBA")},
-// 		{[]byte("ABC"), []byte("CBA")},
-// 		{[]byte("AABCXY"), []byte("YXCBAA")},
-// 		{[]byte("ABCD"), []byte("DCBA")},
-// 		{[]byte(""), []byte("")},
-// 	}
-
-// 	for _, test := range tests {
-// 		result := reverseSlice(test.input)
-// 		if !reflect.DeepEqual(result, test.expected) {
-// 			t.Errorf("reverseSlice(%s) expected %s, got %s", test.input, test.expected, result)
-// 		}
-// 	}
-// }
+			if !reflect.DeepEqual(ndc.removed, test.removed) {
+				t.Errorf("lcs(%s, %s) expected deleted: %v, got %v", test.sourceText, test.revisedText, test.removed, ndc.removed)
+			}
+		})
+	}
+}
 
 func TestGenerateDiff(t *testing.T) {
 	tests := []struct {
@@ -264,6 +282,39 @@ func TestCalculateContextLines(t *testing.T) {
 
 			if !reflect.DeepEqual(ctxEnd, test.ctxEnd) {
 				t.Errorf("calculateContextLines() expected ctxEnd: %v, got: %v", test.ctxEnd, ctxEnd)
+			}
+		})
+	}
+}
+
+func TestReverseSlice(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "Empty slice",
+			input:    []string{},
+			expected: []string{},
+		},
+		{
+			name:     "Single element slice",
+			input:    []string{"line 1"},
+			expected: []string{"line 1"},
+		},
+		{
+			name:     "Multiple element slice",
+			input:    []string{"line 1", "line 2", "line 3", "line 4", "line 5"},
+			expected: []string{"line 5", "line 4", "line 3", "line 2", "line 1"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			reversed := reverseSlice(test.input)
+			if !reflect.DeepEqual(reversed, test.expected) {
+				t.Errorf("reverseSlice(%v) expected %v, got %v", test.input, test.expected, reversed)
 			}
 		})
 	}
