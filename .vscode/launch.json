@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Debug with Args",
+            "type": "go",
+            "request": "launch",
+            "program": "${workspaceFolder}", // Path to your Go program
+            "args": [
+                "sourceText.txt",
+                "revisedText.txt",
+                "3"
+            ],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

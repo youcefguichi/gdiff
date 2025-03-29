@@ -27,7 +27,7 @@ type Change struct {
 
 type DiffChecker struct {
 	sourceText      []string
-	revisedText     []string
+	//revisedText     []string
 	sourceTextSize  int
 	revisedTextSize int
 	lcsOutput       []string
@@ -38,7 +38,7 @@ type DiffChecker struct {
 	depth           int
 }
 
-func NewDiffChecker(sourceText, revisedText []string, depth int) *DiffChecker {
+func DiffChecker(sourceText, revisedText []string, depth int) *DiffChecker {
 	return &DiffChecker{
 		sourceText:      sourceText,
 		revisedText:     revisedText,
@@ -109,7 +109,7 @@ func (d *DiffChecker) GenerateDiff() {
 	var trackerIndex int
 	var change Change
 
-	if !d.hasChanges() {
+	if len(d.removed) == 0 && len(d.inserted) == 0 {
 		return
 	}
 
@@ -252,24 +252,21 @@ func (d *DiffChecker) printDiffWithContext(ctxStart int, ctxEnd int) {
 func (d *DiffChecker) start() {
 	d.lcs(d.sourceText, d.revisedText)
 	d.GenerateDiff()
-
+   
 	if !d.hasChanges() {
-		return
+		return 
 	}
-
-	d.changeSummary()
-
+	
 	for len(d.changesTracker) > 0 {
 		startIdx, endIdx := d.proccessNextChange()
 		d.printDiffWithContext(startIdx, endIdx)
-		separator()
 	}
 
 }
 
-func (d *DiffChecker) proccessNextChange() (int, int) {
-	var changeStartIdx int
-	var changeEndIdx int
+//func (d * DiffChecker) proccessNextChange() (int,int){
+//	var changeStartIdx int
+//	var changeEndIdx int
 	var nextChangeIdx int
 	var overlapStartIdx int
 	var overlapEndIdx int
@@ -277,13 +274,13 @@ func (d *DiffChecker) proccessNextChange() (int, int) {
 	var ctxEnd int
 	Cache := newCache()
 
-	firstIteration := true
+	FirstIteration := true
 	for {
 
 		changeStartIdx, changeEndIdx, nextChangeIdx = d.calculateConsecutiveChanges()
 		ctxStart, ctxEnd = d.calculateContextLines(changeStartIdx, changeEndIdx)
 
-		if !firstIteration && overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
+		if !FirstIteration && overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
 
 			overlapStartIdx, overlapEndIdx = mergeIndices(ctxStart, ctxEnd, Cache.startIdx, Cache.startIdx)
 
@@ -291,15 +288,21 @@ func (d *DiffChecker) proccessNextChange() (int, int) {
 			Cache.endIdx = overlapEndIdx
 		}
 
-		if !firstIteration && !overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
+		if !FirstIteration && !overlap(ctxStart, ctxEnd, Cache.startIdx, Cache.endIdx) {
+			//d.printDiffWithContext(Cache.startIdx, Cache.endIdx)
 			return Cache.startIdx, Cache.endIdx
+			// Cache.startIdx = ctxStart
+			// Cache.endIdx = ctxEnd
+			break
 		}
 
-		if firstIteration {
+		//d.changesTracker = d.changesTracker[nextChangeIdx:]
+
+		if FirstIteration {
 
 			Cache.startIdx = ctxStart
 			Cache.endIdx = ctxEnd
-			firstIteration = false
+			FirstIteration = false
 		}
 
 		d.changesTracker = d.changesTracker[nextChangeIdx:]
@@ -315,7 +318,6 @@ func (d *DiffChecker) proccessNextChange() (int, int) {
 		}
 
 	}
-
 	return Cache.startIdx, Cache.endIdx
 }
 
@@ -340,14 +342,14 @@ func loadFile(filename string) []string {
 	return lines
 }
 
-func newCache() *Cache {
+//func newCache() *Cache {
 	return &Cache{
 		startIdx: 0,
 		endIdx:   0,
 	}
 }
 
-func overlap(a1, a2, b1, b2 int) bool {
+//func overlap(a1, a2, b1, b2 int) bool {
 	return a1 <= b2 && b1 <= a2
 }
 
@@ -355,21 +357,10 @@ func mergeIndices(a1, a2, b1, b2 int) (int, int) {
 	return min(a1, b1), max(a2, b2)
 }
 
-func reverseSlice(data []string) []string {
+//func reverseSlice(data []string) []string {
 	for i := 0; i < len(data)/2; i++ {
 		j := len(data) - 1 - i
 		data[i], data[j] = data[j], data[i]
 	}
 	return data
-}
-
-func separator() {
-	fmt.Println()
-	fmt.Println("\033[34m @@ Hidden Lines @@ \033[0m")
-	fmt.Println()
-}
-
-func (d *DiffChecker) changeSummary() {
-	fmt.Printf("\033[34m @@ change summary: %s+%d%s %s-%d%s @@ \033[0m\n", GREEN, len(d.inserted), RESET, RED, len(d.removed), RESET)
-	fmt.Println()
 }

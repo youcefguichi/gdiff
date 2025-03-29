@@ -319,3 +319,67 @@ func TestReverseSlice(t *testing.T) {
 		})
 	}
 }
+func TestProcessNextChange(t *testing.T) {
+	tests := []struct {
+		name           string
+		changesTracker []int
+		depth          int
+		sourceText     []string
+		revisedText    []string
+		expectedStart  int
+		expectedEnd    int
+	}{
+		{
+			name:           "Single change with no overlap",
+			changesTracker: []int{2},
+			depth:          1,
+			sourceText:     []string{"line 1", "line 2", "line 3", "line 4"},
+			revisedText:    []string{"line 1", "line 2", "line X", "line 4"},
+			expectedStart:  1,
+			expectedEnd:    3,
+		},
+		{
+			name:           "Multiple consecutive changes",
+			changesTracker: []int{2, 3, 4},
+			depth:          1,
+			sourceText:     []string{"line 1", "line 2", "line 3", "line 4", "line 5"},
+			revisedText:    []string{"line 1", "line 2", "line X", "line Y", "line Z"},
+			expectedStart:  1,
+			expectedEnd:    4,
+		},
+		{
+			name:           "Non-consecutive changes with overlap",
+			changesTracker: []int{2, 5},
+			depth:          2,
+			sourceText:     []string{"line 1", "line 2", "line 3", "line 4", "line 5", "line 6"},
+			revisedText:    []string{"line 1", "line 2", "line X", "line 4", "line Y", "line Z"},
+			expectedStart:  0,
+			expectedEnd:    5,
+		},
+		{
+			name:           "No changes",
+			changesTracker: []int{},
+			depth:          1,
+			sourceText:     []string{"line 1", "line 2", "line 3"},
+			revisedText:    []string{"line 1", "line 2", "line 3"},
+			expectedStart:  0,
+			expectedEnd:    0, // TODO: if no changes, should return None
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			ndc := NewDiffChecker(test.sourceText, test.revisedText, test.depth)
+			ndc.changesTracker = test.changesTracker
+			startIdx, endIdx := ndc.proccessNextChange()
+
+			if startIdx != test.expectedStart {
+				t.Errorf("proccessNextChange() expected startIdx: %v, got: %v", test.expectedStart, startIdx)
+			}
+
+			if endIdx != test.expectedEnd {
+				t.Errorf("proccessNextChange() expected endIdx: %v, got: %v", test.expectedEnd, endIdx)
+			}
+		})
+	}
+}
