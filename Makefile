@@ -1,4 +1,4 @@
-BINARY_NAME=diff
+BINARY_NAME=gdiff
 
 all: build
 
