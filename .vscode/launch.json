@@ -5,7 +5,7 @@
             "name": "Run Debug with Args",
             "type": "go",
             "request": "launch",
-            "program": "${workspaceFolder}", // Path to your Go program
+            "program": "${workspaceFolder}",
             "args": [
                 "sourceText.txt",
                 "revisedText.txt",
